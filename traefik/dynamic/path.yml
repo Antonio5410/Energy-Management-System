@@ -62,6 +62,4 @@ http:
     auth-basic:
       basicAuth:
         users:
-          # - "user:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" # password=test
-          # - "mihnea:$apr1$YzAjPUHh$sdDF5hpmjPwbXWTJiW8zd1" # password=test123
-          - "antonio:$2y$05$7CPPtiu9zKraabRIGgiMFuREtd8qp9FcocfSPQe9RS.mtwnz2/2Ji" #pass = parola123
+          - "antonio:$2y$05$7CPPtiu9zKraabRIGgiMFuREtd8qp9FcocfSPQe9RS.mtwnz2/2Ji" #password = parola123

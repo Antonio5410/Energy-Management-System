@@ -108,20 +108,17 @@ services:
       - --accesslog=true
       - --accesslog.filepath=/var/log/traefik/access.log
       - --log.level=DEBUG
-      - --providers.docker
-      - --providers.file.directory=/etc/traefik/dynamic
-      - --providers.file.watch=true
+      - --providers.docker=true
       - --entrypoints.web.address=:80
-      - --providers.file.directory=/dynamic
+      # NU mai setezi providers.file aici, îl lași în traefik.yml
     ports:
-      - "80:80"        # HTTP pentru aplicație (Reverse Proxy)
-      - "8080:8080"    # Dashboard Traefik (doar dev)
+      - "80:80"
+      - "8080:8080"
     volumes:
-      - ./path.yml:/dynamic/path.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_logs:/var/log/traefik
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic:/etc/traefik/dynamic:ro 
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
     networks:
       - proxy-network
     restart: unless-stopped
@@ -167,7 +164,7 @@ services:
       # Spune-i lui Traefik pe ce port ascultă containerul în interior
       - traefik.http.services.people.loadbalancer.server.port=8080
       # Adaugă middleware de autentificare basic
-      - traefik.http.routers.people.middlewares=auth-basic@file
+      - traefik.http.routers.people.middlewares=auth-basic@file,strip-people-prefix@file
     deploy:
       replicas: 2   # <— Load Balancing între 2 instanțe (poți și cu --scale)  :contentReference[oaicite:1]{index=1}
 
