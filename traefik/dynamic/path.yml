@@ -1,0 +1,67 @@
+http:
+  routers:
+    # # Frontend router
+    # nginx-frontend:
+    #   rule: "Host(`localhost`)"
+    #   entryPoints:
+    #     - web
+    #   service: nginx-service
+    #   priority: 10  # higher priority than API routers
+
+    # People service router
+    backend-people:
+      rule: "Host(`localhost`) && PathPrefix(`/people`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-basic
+        - strip-people-prefix
+      service: people-service
+
+    # Device service router
+    backend-device:
+      rule: "Host(`localhost`) && PathPrefix(`/devices`)"
+      entryPoints:
+        - web
+      middlewares:
+        - auth-basic
+        - strip-device-prefix
+      service: device-service
+
+  services:
+    # nginx-service:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://nginx:80"
+    #     passHostHeader: true
+
+    people-service:
+      loadBalancer:
+        servers:
+          - url: "http://people-service:8080"
+
+    device-service:
+      loadBalancer:
+        servers:
+          - url: "http://device-service:8080"
+
+  middlewares:
+    # Strip prefix for people service
+    strip-people-prefix:
+      stripPrefix:
+        prefixes:
+          - "/people"
+
+    # Strip prefix for device service
+    strip-device-prefix:
+      stripPrefix:
+        prefixes:
+          - "/devices"
+
+    # Basic auth for APIs
+    auth-basic:
+      basicAuth:
+        users:
+          # - "user:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/" # password=test
+          # - "mihnea:$apr1$YzAjPUHh$sdDF5hpmjPwbXWTJiW8zd1" # password=test123
+          - "antonio:$2y$05$7CPPtiu9zKraabRIGgiMFuREtd8qp9FcocfSPQe9RS.mtwnz2/2Ji" #pass = parola123

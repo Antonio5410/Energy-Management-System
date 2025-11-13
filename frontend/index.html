@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Microservices Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+    button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #45a049; }
+    pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Microservices Dashboard</h1>
+  <button onclick="callApi('/api/city')">Check City Service</button>
+  <button onclick="callApi('/api/device')">Check Device Service</button>
+  <button onclick="insertPerson()">Insert New Person</button>
+  <button onclick="getAllPersons()">Get All Persons</button>
+  <button onclick="callApi('/api/city/device-status')">Check Device from City Service</button>
+  <p>Backend response:</p>
+  <pre id="result">Click a button to fetch data...</pre>
+
+  <script>
+    async function callApi(path) {
+      const response = await fetch(path, { headers: { 'Authorization': 'Basic ' + btoa('user:test') } });
+      const text = await response.text();
+      document.getElementById('result').innerText = text;
+    }
+
+    async function insertPerson() {
+    const person = {
+      name: "John Doe",
+      address: "123 Main Street",
+      age: 30
+    };
+
+    const response = await fetch('/api/city/people', {  // include /api/city prefix
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa('user:test'),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(person)
+    });
+
+    if (response.ok) {
+      document.getElementById('result').innerText = `Person created!`;
+    } else {
+      const errorText = await response.text();
+      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+    }
+  }
+
+  async function getAllPersons() {
+    const response = await fetch('/api/city/people', {
+      headers: { 'Authorization': 'Basic ' + btoa('user:test') }
+    });
+
+    if (response.ok) {
+      const people = await response.json();
+      document.getElementById('result').innerText = JSON.stringify(people, null, 2);
+    } else {
+      const errorText = await response.text();
+      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+    }
+  }
+  </script>
+</body>
+</html>
