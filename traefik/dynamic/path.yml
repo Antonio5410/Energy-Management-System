@@ -15,7 +15,6 @@ http:
         - web
       middlewares:
         - auth-basic
-        - strip-people-prefix
       service: people-service
 
     # Device service router
@@ -25,7 +24,6 @@ http:
         - web
       middlewares:
         - auth-basic
-        - strip-device-prefix
       service: device-service
 
   services:
@@ -46,17 +44,17 @@ http:
           - url: "http://device-service:8080"
 
   middlewares:
-    # Strip prefix for people service
-    strip-people-prefix:
-      stripPrefix:
-        prefixes:
-          - "/people"
+    # # Strip prefix for people service
+    # strip-people-prefix:
+    #   stripPrefix:
+    #     prefixes:
+    #       - "/people"
 
-    # Strip prefix for device service
-    strip-device-prefix:
-      stripPrefix:
-        prefixes:
-          - "/devices"
+    # # Strip prefix for device service
+    # strip-device-prefix:
+    #   stripPrefix:
+    #     prefixes:
+    #       - "/devices"
 
     # Basic auth for APIs
     auth-basic:

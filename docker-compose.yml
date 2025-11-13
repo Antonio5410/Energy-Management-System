@@ -164,7 +164,7 @@ services:
       # Spune-i lui Traefik pe ce port ascultă containerul în interior
       - traefik.http.services.people.loadbalancer.server.port=8080
       # Adaugă middleware de autentificare basic
-      - traefik.http.routers.people.middlewares=auth-basic@file,strip-people-prefix@file
+      - traefik.http.routers.people.middlewares=auth-basic@file
     deploy:
       replicas: 2   # <— Load Balancing între 2 instanțe (poți și cu --scale)  :contentReference[oaicite:1]{index=1}
 
@@ -189,6 +189,8 @@ services:
       - traefik.http.routers.devices.rule=PathPrefix(`/devices`)
       - traefik.http.routers.devices.entrypoints=web
       - traefik.http.services.devices.loadbalancer.server.port=8080
+      # Adaugă middleware de autentificare basic
+      - traefik.http.routers.devices.middlewares=auth-basic@file
     deploy:
       replicas: 1
 
