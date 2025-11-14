@@ -18,6 +18,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.demo.dtos.builders.DeviceBuilder.toDeviceDTO;
+
 @Service
 public class DeviceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceService.class);
@@ -43,11 +45,53 @@ public class DeviceService {
         return DeviceBuilder.toDeviceDetailsDTO(deviceOpt.get());
     }
 
+//    List<DeviceDetailsDTO> findDevicesByOwnerId(UUID ownerId) {
+//        Optional<Device> deviceOpt = deviceRepository.findById(ownerId);
+//        if (!deviceOpt.isPresent()) {
+//            LOGGER.error("Device with owner id {} was not found in db", ownerId);
+//            throw new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + ownerId);
+//        }
+//        return
+//    }
+
+//    List<DeviceDetailsDTO> findDevicesByOwnerId(UUID ownerId) {
+//        List<Device> devices = deviceRepository.findByOwnerId(ownerId);
+//        if (devices.isEmpty()) {
+//            LOGGER.error("Devices with owner id {} were not found in db", ownerId);
+//            throw new ResourceNotFoundException(Device.class.getSimpleName() + "s with owner id: " + ownerId);
+//        }
+//        return devices.stream()
+//                .map(DeviceBuilder::toDeviceDetailsDTO)
+//                .collect(Collectors.toList());
+//    }
+
+    public List<DeviceDTO> getDevicesByOwner(UUID ownerId) {
+        return deviceRepository.findByOwnerId(ownerId).stream()
+                .map(this::toDto)
+                .toList();
+    }
+    private DeviceDTO toDto(Device device) {
+        DeviceDTO dto = new DeviceDTO();
+        dto.setId(device.getId());
+        dto.setName(device.getName());
+        dto.setOwnerId(device.getOwnerId());
+        return dto;
+    }
+
     public UUID insert(DeviceDetailsDTO deviceDTO) {
         Device device = DeviceBuilder.toEntity(deviceDTO);
         device = deviceRepository.save(device);
         LOGGER.debug("Device with id {} was inserted in db", device.getId());
         return device.getId();
+    }
+
+    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO updated) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + id));
+        device.setName(updated.getName());
+        device.setConsumMaxim(updated.getConsumMaxim());
+        device.setOwnerId(updated.getOwnerId());
+        return DeviceBuilder.toDeviceDetailsDTO(deviceRepository.save(device));
     }
 
     public void delete(UUID id) {
@@ -56,14 +100,5 @@ public class DeviceService {
         }
         deviceRepository.deleteById(id);
     }
-
-    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO updated) {
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + id));
-        device.setName(updated.getName());
-        device.setConsumMaxim(updated.getConsumMaxim());
-        return DeviceBuilder.toDeviceDetailsDTO(deviceRepository.save(device));
-    }
-
 
 }
