@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 
+import com.example.demo.dtos.DeviceDTO;
 import com.example.demo.dtos.PersonDTO;
 import com.example.demo.dtos.PersonDetailsDTO;
 import com.example.demo.dtos.builders.PersonBuilder;
@@ -18,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,35 +92,45 @@ public class PersonService {
 
     private void deleteDevicesForPerson(UUID personId) {
         String url = deviceServiceUrl + "/owner/" + personId;
+        System.out.println("Cascade delete: fetching devices from " + url);
 
         try {
-            restTemplate.delete(url);
-            System.out.println("Cascade delete OK for person " + personId);
+            ResponseEntity<DeviceDTO[]> response =
+                    restTemplate.getForEntity(url, DeviceDTO[].class);
+
+            List<DeviceDTO> devices;
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                devices = Arrays.asList(response.getBody());
+            } else {
+                devices = Collections.emptyList();
+            }
+
+            System.out.println("Cascade delete: found " + devices.size() + " device(s) for person " + personId);
+
+            for (DeviceDTO device : devices) {
+                String deleteUrl = deviceServiceUrl + "/" + device.getId();
+                System.out.println("Deleting device " + device.getId() + " via " + deleteUrl);
+                restTemplate.delete(deleteUrl);
+            }
 
         } catch (RestClientException e) {
-            System.out.println("Cascade delete FAILED for person " + personId + ": " + e.getMessage());
-
-            // Poți decide:
-            // throw new RuntimeException("Could not cascade delete devices", e);
-            // SAU: doar log și continui să ștergi persoana
-            // Eu recomand DOAR log la proiectul tău:
-            // lăsăm oamenii să fie șterși chiar dacă device-service a picat :)
+            System.out.println("Error during cascade delete for person " + personId + ": " + e.getMessage());
+            // la proiectul tău eu aș zice să NU arunci excepție aici,
+            // ca să nu blochezi ștergerea persoanei dacă device-service are o problemă temporară.
         }
     }
 
 
 
 
+
     public void delete(UUID id) {
-        Optional<Person> personOptional = personRepository.findById(id);
-        if (personOptional.isEmpty()) {
-            LOGGER.error("Person with id {} was not found in db", id);
-            throw new ResourceNotFoundException(Person.class.getSimpleName() + " with id: " + id);
-        }
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cannot find the person with id: " + id));
 
         deleteDevicesForPerson(id);
 
-        personRepository.deleteById(id);
+        personRepository.delete(person);
         LOGGER.debug("Person with id {} was deleted from db", id);
     }
 

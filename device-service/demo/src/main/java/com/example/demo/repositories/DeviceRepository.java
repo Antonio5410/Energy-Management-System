@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface DeviceRepository extends JpaRepository<Device, UUID> {
     List<Device> findByOwnerId(UUID ownerId);
-    void deleteByOwnerId(UUID ownerId);
+//    void deleteByOwnerId(UUID ownerId);
 }
