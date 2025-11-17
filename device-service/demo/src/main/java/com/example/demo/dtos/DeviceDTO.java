@@ -1,11 +1,14 @@
 package com.example.demo.dtos;
 
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.UUID;
 
 public class DeviceDTO {
     private UUID id;
     private String name;
+    @NotNull(message = "ownerId must not be null")
     private UUID ownerId;
 
     public DeviceDTO() {}

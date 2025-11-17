@@ -12,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,10 +25,13 @@ import java.util.stream.Collectors;
 public class DeviceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceService.class);
     private final DeviceRepository deviceRepository;
+    private final RestTemplate restTemplate;
 
     public DeviceService(DeviceRepository deviceRepository) {
         this.deviceRepository = deviceRepository;
+        this.restTemplate = new RestTemplate();
     }
+
 
     public List<DeviceDTO> findDevices() {
         return deviceRepository.findAll()
@@ -43,7 +49,41 @@ public class DeviceService {
         return DeviceBuilder.toDeviceDetailsDTO(deviceOpt.get());
     }
 
+    private boolean userExists(UUID personId) {
+        String peopleServiceUrl = "http://people-service:8081/people/";
+        String url = peopleServiceUrl + personId;
+        try {
+            var response = restTemplate.getForEntity(url, Void.class);
+            // dacă ajungem aici și e 2xx, userul există
+            return response.getStatusCode().is2xxSuccessful();
+
+        } catch (HttpClientErrorException.NotFound e) {
+            // 404 -> userul NU există
+            return false;
+
+        } catch (HttpClientErrorException e) {
+            // alte 4xx/5xx (401, 403, 500 etc.) -> le tratăm ca "nu există" pentru simplitate
+            System.out.println("people-service returned status: " + e.getStatusCode());
+            return false;
+
+        } catch (RestClientException e) {
+            // conexiune picată, hostname greșit etc.
+            System.out.println("Error calling people-service: " + e.getMessage());
+            return false;
+        }
+    }
+
+
     public UUID insert(DeviceDetailsDTO deviceDTO) {
+
+        if (deviceDTO.getOwnerId() == null) {
+            throw new ResourceNotFoundException("The user ID cannot be null.");
+        }
+
+        if (!userExists(deviceDTO.getOwnerId())) {
+            throw new ResourceNotFoundException("The user ID was not found.");
+        }
+
         Device device = DeviceBuilder.toEntity(deviceDTO);
         device = deviceRepository.save(device);
         LOGGER.debug("Device with id {} was inserted in db", device.getId());
