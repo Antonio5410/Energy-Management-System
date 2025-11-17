@@ -10,14 +10,14 @@ public class DeviceBuilder {
     }
 
     public static DeviceDTO toDeviceDTO(Device device) {
-        return new DeviceDTO(device.getId(), device.getName());
+        return new DeviceDTO(device.getId(), device.getName(), device.getOwnerId());
     }
 
     public static DeviceDetailsDTO toDeviceDetailsDTO(Device device) {
-        return new DeviceDetailsDTO(device.getId(), device.getName(), device.getConsumMaxim());
+        return new DeviceDetailsDTO(device.getId(), device.getName(), device.getConsumMaxim(), device.getOwnerId());
     }
 
     public static Device toEntity(DeviceDetailsDTO deviceDTO) {
-        return new Device(deviceDTO.getName(), deviceDTO.getConsumMaxim());
+        return new Device(deviceDTO.getName(), deviceDTO.getConsumMaxim(), deviceDTO.getOwnerId());
     }
 }
