@@ -12,11 +12,11 @@
 </head>
 <body>
   <h1>Welcome to the Microservices Dashboard</h1>
-  <button onclick="callApi('/api/city')">Check City Service</button>
-  <button onclick="callApi('/api/device')">Check Device Service</button>
+  <button onclick="callApi('/api/people')">Check City Service</button>
+  <button onclick="callApi('/api/devices')">Check Device Service</button>
   <button onclick="insertPerson()">Insert New Person</button>
   <button onclick="getAllPersons()">Get All Persons</button>
-  <button onclick="callApi('/api/city/device-status')">Check Device from City Service</button>
+  <button onclick="callApi('/api/people/device-status')">Check Device from City Service</button>
   <p>Backend response:</p>
   <pre id="result">Click a button to fetch data...</pre>
 
@@ -34,7 +34,7 @@
       age: 30
     };
 
-    const response = await fetch('/api/city/people', {  // include /api/city prefix
+    const response = await fetch('/api/people', {  // include /api/city prefix
       method: 'POST',
       headers: {
         'Authorization': 'Basic ' + btoa('user:test'),
@@ -52,7 +52,7 @@
   }
 
   async function getAllPersons() {
-    const response = await fetch('/api/city/people', {
+    const response = await fetch('/api/people', {
       headers: { 'Authorization': 'Basic ' + btoa('user:test') }
     });
 

@@ -55,4 +55,9 @@ public class DeviceController {
         deviceService.delete(id);
         return ResponseEntity.noContent().build();
     }
+    @DeleteMapping("/owner/{ownerId}")
+    public ResponseEntity<Void> deleteDevicesByOwner(@PathVariable UUID ownerId) {
+        deviceService.deleteDevicesByOwnerId(ownerId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -143,4 +143,9 @@ public class DeviceService {
         }
         deviceRepository.deleteById(id);
     }
+    public void deleteDevicesByOwnerId(UUID ownerId) {
+        System.out.println("Deleting devices for ownerId = " + ownerId);
+        deviceRepository.deleteByOwnerId(ownerId);
+    }
+
 }

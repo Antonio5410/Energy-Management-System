@@ -11,7 +11,12 @@ import com.example.demo.repositories.PersonRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +27,14 @@ import java.util.stream.Collectors;
 public class PersonService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersonService.class);
     private final PersonRepository personRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${device.service.url}")
+    private String deviceServiceUrl;
 
     @Autowired
-    public PersonService(PersonRepository personRepository) {
+    public PersonService(PersonRepository personRepository, RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
         this.personRepository = personRepository;
     }
 
@@ -81,6 +91,26 @@ public class PersonService {
         return id;
     }
 
+    private void deleteDevicesForPerson(UUID personId) {
+        String url = deviceServiceUrl + "/owner/" + personId;
+
+        try {
+            restTemplate.delete(url);
+            System.out.println("Cascade delete OK for person " + personId);
+
+        } catch (RestClientException e) {
+            System.out.println("Cascade delete FAILED for person " + personId + ": " + e.getMessage());
+
+            // Poți decide:
+            // throw new RuntimeException("Could not cascade delete devices", e);
+            // SAU: doar log și continui să ștergi persoana
+            // Eu recomand DOAR log la proiectul tău:
+            // lăsăm oamenii să fie șterși chiar dacă device-service a picat :)
+        }
+    }
+
+
+
 
     public void delete(UUID id) {
         Optional<Person> personOptional = personRepository.findById(id);
@@ -88,6 +118,8 @@ public class PersonService {
             LOGGER.error("Person with id {} was not found in db", id);
             throw new ResourceNotFoundException(Person.class.getSimpleName() + " with id: " + id);
         }
+
+        deleteDevicesForPerson(id);
 
         personRepository.deleteById(id);
         LOGGER.debug("Person with id {} was deleted from db", id);
