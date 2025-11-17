@@ -138,6 +138,9 @@ services:
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-device-db
     networks: [proxy-network]
+    # ports:
+      # - "5433:5432"  # Exposează pentru acces local la baza de date (opțional)
+    # networks: [proxy-network]
 
   people-service:
     image: energy-management-deploy-example-people-service:latest
