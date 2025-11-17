@@ -33,13 +33,15 @@ public class DeviceController {
         return ResponseEntity.ok(deviceService.findDeviceById(id));
     }
 
+    @GetMapping("/owner/{ownerId}")
+    public ResponseEntity<List<DeviceDTO>> getDevicesByOwner(@PathVariable UUID ownerId) {
+        List<DeviceDTO> devices = deviceService.findDevicesByOwner(ownerId);
+        return ResponseEntity.ok(devices);
+    }
+
     @PostMapping
     public ResponseEntity<UUID> create(@Valid @RequestBody DeviceDetailsDTO device) {
         UUID id = deviceService.insert(device);
-        // URI location = ServletUriComponentsBuilder
-        //         .fromCurrentRequest().path("/{id}")
-        //         .buildAndExpand(id).toUri();
-        // return ResponseEntity.created(location).build();
         return new ResponseEntity<>(id, HttpStatus.CREATED);
     }
 

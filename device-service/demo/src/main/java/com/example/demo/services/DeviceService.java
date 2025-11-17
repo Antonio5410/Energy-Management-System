@@ -63,21 +63,36 @@ public class DeviceService {
             return response.getStatusCode().is2xxSuccessful();
 
         } catch (HttpClientErrorException.NotFound e) {
-            // 404 -> userul NU există
+            // 404 -> userul NU exista
             System.out.println("people-service returned 404 NOT FOUND for " + personId);
             return false;
 
         } catch (HttpClientErrorException e) {
-            // alte 4xx / 5xx – pentru proiectul ăsta le tratăm tot ca "nu există"
+            // alte 4xx / 5xx – pentru proiectul asta le tratam tot ca "nu exista"
             System.out.println("people-service returned error status: " + e.getStatusCode());
             return false;
 
         } catch (RestClientException e) {
-            // conexiune picată, DNS greșit, etc.
+            // conexiune picata, DNS gresit, etc.
             System.out.println("Error calling people-service: " + e.getMessage());
             return false;
         }
     }
+
+    public List<DeviceDTO> findDevicesByOwner(UUID ownerId) {
+        if (!userExists(ownerId)) {
+            throw new ResourceNotFoundException(
+                    "The userId = " + ownerId.toString() + " was not found."
+            );
+        }
+
+        List<Device> devices = deviceRepository.findByOwnerId(ownerId);
+
+        return devices.stream()
+                .map(DeviceBuilder::toDeviceDTO)
+                .collect(Collectors.toList());
+    }
+
 
 
 
@@ -97,20 +112,35 @@ public class DeviceService {
         return device.getId();
     }
 
+    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO dto) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "This device does not exist."
+                ));
+
+        if (dto.getOwnerId() == null) {
+            throw new ResourceNotFoundException(
+                    "The userId cannot be null."
+            );
+        }
+
+        if (!userExists(dto.getOwnerId())) {
+            throw new ResourceNotFoundException(
+                    "The userId is invalid."
+            );
+        }
+
+        device.setName(dto.getName());
+        device.setConsumMaxim(dto.getConsumMaxim());
+        device.setOwnerId(dto.getOwnerId());
+
+        return DeviceBuilder.toDeviceDetailsDTO(deviceRepository.save(device));
+    }
+
     public void delete(UUID id) {
         if (!deviceRepository.existsById(id)) {
             throw new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + id);
         }
         deviceRepository.deleteById(id);
     }
-
-    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO updated) {
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + id));
-        device.setName(updated.getName());
-        device.setConsumMaxim(updated.getConsumMaxim());
-        return DeviceBuilder.toDeviceDetailsDTO(deviceRepository.save(device));
-    }
-
-
 }
