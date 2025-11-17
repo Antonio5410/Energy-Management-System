@@ -92,33 +92,17 @@ public class PersonService {
 
     private void deleteDevicesForPerson(UUID personId) {
         String url = deviceServiceUrl + "/owner/" + personId;
-        System.out.println("Cascade delete: fetching devices from " + url);
 
-        try {
-            ResponseEntity<DeviceDTO[]> response =
-                    restTemplate.getForEntity(url, DeviceDTO[].class);
+        // 1. luam device-urile persoanei
+        DeviceDTO[] devices = restTemplate.getForObject(url, DeviceDTO[].class);
 
-            List<DeviceDTO> devices;
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                devices = Arrays.asList(response.getBody());
-            } else {
-                devices = Collections.emptyList();
-            }
-
-            System.out.println("Cascade delete: found " + devices.size() + " device(s) for person " + personId);
-
-            for (DeviceDTO device : devices) {
-                String deleteUrl = deviceServiceUrl + "/" + device.getId();
-                System.out.println("Deleting device " + device.getId() + " via " + deleteUrl);
-                restTemplate.delete(deleteUrl);
-            }
-
-        } catch (RestClientException e) {
-            System.out.println("Error during cascade delete for person " + personId + ": " + e.getMessage());
-            // la proiectul tău eu aș zice să NU arunci excepție aici,
-            // ca să nu blochezi ștergerea persoanei dacă device-service are o problemă temporară.
+        // 2. le stergem pe rand
+        for (DeviceDTO d : devices) {
+            String deleteUrl = deviceServiceUrl + "/" + d.getId();
+            restTemplate.delete(deleteUrl);
         }
     }
+
 
 
 

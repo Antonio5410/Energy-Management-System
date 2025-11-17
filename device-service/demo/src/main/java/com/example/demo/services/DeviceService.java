@@ -143,10 +143,5 @@ public class DeviceService {
         }
         deviceRepository.deleteById(id);
     }
-    public void deleteDevicesByOwnerId(UUID ownerId) {
-        List<Device> devices = deviceRepository.findByOwnerId(ownerId);
-        System.out.println("Cascade delete: found " + devices.size() + " device(s) for ownerId = " + ownerId);
-        deviceRepository.deleteAll(devices);
-    }
 
 }
