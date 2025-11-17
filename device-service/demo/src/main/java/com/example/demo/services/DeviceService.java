@@ -11,6 +11,7 @@ import com.example.demo.repositories.DeviceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -26,6 +27,9 @@ public class DeviceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceService.class);
     private final DeviceRepository deviceRepository;
     private final RestTemplate restTemplate;
+
+    @Value("${people.service.url}")
+    private String peopleServiceUrl;
 
     public DeviceService(DeviceRepository deviceRepository) {
         this.deviceRepository = deviceRepository;
@@ -50,28 +54,31 @@ public class DeviceService {
     }
 
     private boolean userExists(UUID personId) {
-        String peopleServiceUrl = "http://people-service:8081/people/";
-        String url = peopleServiceUrl + personId;
+        String url = peopleServiceUrl + "/" + personId;
+        System.out.println("Calling people-service: " + url);
+
         try {
             var response = restTemplate.getForEntity(url, Void.class);
-            // dacă ajungem aici și e 2xx, userul există
+            System.out.println("people-service responded with: " + response.getStatusCode());
             return response.getStatusCode().is2xxSuccessful();
 
         } catch (HttpClientErrorException.NotFound e) {
             // 404 -> userul NU există
+            System.out.println("people-service returned 404 NOT FOUND for " + personId);
             return false;
 
         } catch (HttpClientErrorException e) {
-            // alte 4xx/5xx (401, 403, 500 etc.) -> le tratăm ca "nu există" pentru simplitate
-            System.out.println("people-service returned status: " + e.getStatusCode());
+            // alte 4xx / 5xx – pentru proiectul ăsta le tratăm tot ca "nu există"
+            System.out.println("people-service returned error status: " + e.getStatusCode());
             return false;
 
         } catch (RestClientException e) {
-            // conexiune picată, hostname greșit etc.
+            // conexiune picată, DNS greșit, etc.
             System.out.println("Error calling people-service: " + e.getMessage());
             return false;
         }
     }
+
 
 
     public UUID insert(DeviceDetailsDTO deviceDTO) {
