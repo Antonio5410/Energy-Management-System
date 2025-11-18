@@ -115,6 +115,11 @@
       <input id="username" type="text" placeholder="jdoe" value="demo_user">
     </div>
     <div class="form-row">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="parola_userului" value="pass123">
+    </div>
+
+    <div class="form-row">
       <label for="name">Name</label>
       <input id="name" type="text" placeholder="John Doe" value="Demo User">
     </div>
@@ -222,11 +227,13 @@
     async function insertPersonFromForm() {
       const person = {
         username: document.getElementById('username').value || null,
+        password: document.getElementById('password').value || null,
         role: document.getElementById('role').value || null,
         name: document.getElementById('name').value || null,
         address: document.getElementById('address').value || null,
         age: parseInt(document.getElementById('age').value, 10) || null
       };
+
 
       await callApi('/people', {
         method: 'POST',
