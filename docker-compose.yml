@@ -138,6 +138,9 @@ services:
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-device-db
     networks: [proxy-network]
+    # ports:
+      # - "5433:5432"  # Exposează pentru acces local la baza de date (opțional)
+    # networks: [proxy-network]
 
   people-service:
     image: energy-management-deploy-example-people-service:latest
@@ -180,7 +183,7 @@ services:
       DB_IP: energy-device-db
       DB_PORT: 5432
       PORT: 8080
-      # SERVER_PORT: 8082
+      SERVER_PORT: 8082
     depends_on:
       - energy-device-db
     networks: [proxy-network]
@@ -192,7 +195,7 @@ services:
       # Adaugă middleware de autentificare basic
       - traefik.http.routers.devices.middlewares=auth-basic@file
     deploy:
-      replicas: 2
+      replicas: 1
 
 networks:
   proxy-network:
