@@ -80,11 +80,11 @@ public class DeviceService {
     }
 
     public List<DeviceDTO> findDevicesByOwner(UUID ownerId) {
-        if (!userExists(ownerId)) {
-            throw new ResourceNotFoundException(
-                    "The userId = " + ownerId.toString() + " was not found."
-            );
-        }
+//        if (!userExists(ownerId)) {
+//            throw new ResourceNotFoundException(
+//                    "The userId = " + ownerId.toString() + " was not found."
+//            );
+//        }
 
         List<Device> devices = deviceRepository.findByOwnerId(ownerId);
 
