@@ -88,7 +88,7 @@ services:
       - traefik.http.services.devices.loadbalancer.server.port=8080
       - traefik.http.routers.devices.middlewares=auth-basic@file
     deploy:
-      replicas: 2
+      replicas: 1
 
   nginx-frontend:
     build:
