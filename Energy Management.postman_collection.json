@@ -60,6 +60,26 @@
 			"response": []
 		},
 		{
+			"name": "GET devices by ownerId",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/devices/owner/{{ownerId}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"devices",
+						"owner",
+						"{{ownerId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "CREATE person",
 			"request": {
 				"method": "POST",

@@ -27,7 +27,9 @@ public class Device implements Serializable {
     @Column(name = "consumMaxim", nullable = false)
     private Integer consumMaxim;
 
+    
     @Column(name = "owner_id", nullable = false)
+    @JdbcTypeCode(SqlTypes.UUID)
     private UUID ownerId;
 
     public Device() {

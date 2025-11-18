@@ -11,7 +11,11 @@ import com.example.demo.repositories.DeviceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,10 +28,16 @@ import static com.example.demo.dtos.builders.DeviceBuilder.toDeviceDTO;
 public class DeviceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceService.class);
     private final DeviceRepository deviceRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${people.service.url}")
+    private String peopleServiceUrl;
 
     public DeviceService(DeviceRepository deviceRepository) {
         this.deviceRepository = deviceRepository;
+        this.restTemplate = new RestTemplate();
     }
+
 
     public List<DeviceDTO> findDevices() {
         return deviceRepository.findAll()
@@ -45,52 +55,87 @@ public class DeviceService {
         return DeviceBuilder.toDeviceDetailsDTO(deviceOpt.get());
     }
 
-//    List<DeviceDetailsDTO> findDevicesByOwnerId(UUID ownerId) {
-//        Optional<Device> deviceOpt = deviceRepository.findById(ownerId);
-//        if (!deviceOpt.isPresent()) {
-//            LOGGER.error("Device with owner id {} was not found in db", ownerId);
-//            throw new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + ownerId);
-//        }
-//        return
-//    }
+    private boolean userExists(UUID personId) {
+        String url = peopleServiceUrl + "/" + personId;
+        System.out.println("Calling people-service: " + url);
 
-//    List<DeviceDetailsDTO> findDevicesByOwnerId(UUID ownerId) {
-//        List<Device> devices = deviceRepository.findByOwnerId(ownerId);
-//        if (devices.isEmpty()) {
-//            LOGGER.error("Devices with owner id {} were not found in db", ownerId);
-//            throw new ResourceNotFoundException(Device.class.getSimpleName() + "s with owner id: " + ownerId);
-//        }
-//        return devices.stream()
-//                .map(DeviceBuilder::toDeviceDetailsDTO)
-//                .collect(Collectors.toList());
-//    }
+        try {
+            var response = restTemplate.getForEntity(url, Void.class);
+            System.out.println("people-service responded with: " + response.getStatusCode());
+            return response.getStatusCode().is2xxSuccessful();
 
-    public List<DeviceDTO> getDevicesByOwner(UUID ownerId) {
-        return deviceRepository.findByOwnerId(ownerId).stream()
-                .map(this::toDto)
-                .toList();
+        } catch (HttpClientErrorException.NotFound e) {
+            // 404 -> userul NU exista
+            System.out.println("people-service returned 404 NOT FOUND for " + personId);
+            return false;
+
+        } catch (HttpClientErrorException e) {
+            // alte 4xx / 5xx – pentru proiectul asta le tratam tot ca "nu exista"
+            System.out.println("people-service returned error status: " + e.getStatusCode());
+            return false;
+
+        } catch (RestClientException e) {
+            // conexiune picata, DNS gresit, etc.
+            System.out.println("Error calling people-service: " + e.getMessage());
+            return false;
+        }
     }
-    private DeviceDTO toDto(Device device) {
-        DeviceDTO dto = new DeviceDTO();
-        dto.setId(device.getId());
-        dto.setName(device.getName());
-        dto.setOwnerId(device.getOwnerId());
-        return dto;
+
+    public List<DeviceDTO> findDevicesByOwner(UUID ownerId) {
+//        if (!userExists(ownerId)) {
+//            throw new ResourceNotFoundException(
+//                    "The userId = " + ownerId.toString() + " was not found."
+//            );
+//        }
+
+        List<Device> devices = deviceRepository.findByOwnerId(ownerId);
+
+        return devices.stream()
+                .map(DeviceBuilder::toDeviceDTO)
+                .collect(Collectors.toList());
     }
+
+
+
 
     public UUID insert(DeviceDetailsDTO deviceDTO) {
+
+        if (deviceDTO.getOwnerId() == null) {
+            throw new ResourceNotFoundException("The user ID cannot be null.");
+        }
+
+        if (!userExists(deviceDTO.getOwnerId())) {
+            throw new ResourceNotFoundException("The user ID was not found.");
+        }
+
         Device device = DeviceBuilder.toEntity(deviceDTO);
         device = deviceRepository.save(device);
         LOGGER.debug("Device with id {} was inserted in db", device.getId());
         return device.getId();
     }
 
-    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO updated) {
+    public DeviceDetailsDTO update(UUID id, DeviceDetailsDTO dto) {
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Device.class.getSimpleName() + " with id: " + id));
-        device.setName(updated.getName());
-        device.setConsumMaxim(updated.getConsumMaxim());
-        device.setOwnerId(updated.getOwnerId());
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "This device does not exist."
+                ));
+
+        if (dto.getOwnerId() == null) {
+            throw new ResourceNotFoundException(
+                    "The userId cannot be null."
+            );
+        }
+
+        if (!userExists(dto.getOwnerId())) {
+            throw new ResourceNotFoundException(
+                    "The userId is invalid."
+            );
+        }
+
+        device.setName(dto.getName());
+        device.setConsumMaxim(dto.getConsumMaxim());
+        device.setOwnerId(dto.getOwnerId());
+
         return DeviceBuilder.toDeviceDetailsDTO(deviceRepository.save(device));
     }
 
