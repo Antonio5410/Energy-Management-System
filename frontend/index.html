@@ -93,16 +93,16 @@
     <small>Basic Auth: <code>antonio/parola123</code> (header <code>Authorization: Basic ...</code>)</small>
   </p>
 
-  <!-- Butoane simple de health-check -->
+  <!-- Butoane overview -->
   <div class="buttons">
-    <button onclick="checkPeople()">
-      <span class="badge-get">GET</span> Check People Service
-    </button>
-    <button onclick="checkDevices()">
-      <span class="badge-get">GET</span> Check Device Service
+    <button onclick="checkBackend()">
+      <span class="badge-get">GET</span> Check People & Device Services
     </button>
     <button onclick="getAllPersons()">
       <span class="badge-get">GET</span> Get All Persons
+    </button>
+    <button onclick="getAllDevices()">
+      <span class="badge-get">GET</span> Get All Devices
     </button>
   </div>
 
@@ -116,9 +116,8 @@
     </div>
     <div class="form-row">
       <label for="password">Password</label>
-      <input id="password" type="password" placeholder="parola_userului" value="pass123">
+      <input id="password" type="password" placeholder="parola_userului" value="parola123">
     </div>
-
     <div class="form-row">
       <label for="name">Name</label>
       <input id="name" type="text" placeholder="John Doe" value="Demo User">
@@ -143,6 +142,123 @@
       <span class="badge-post">POST</span> Insert Person
     </button>
   </fieldset>
+  <fieldset>
+  <legend>Manage Persons (update / delete)</legend>
+
+  <!-- Update Person -->
+  <div class="form-row">
+    <label for="upd-person-id">Person ID (UUID)</label>
+    <input id="upd-person-id" type="text" placeholder="UUID of Person to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-username">Username</label>
+    <input id="upd-username" type="text" placeholder="New username (required)">
+  </div>
+  <div class="form-row">
+    <label for="upd-password">Password</label>
+    <input id="upd-password" type="password" placeholder="New password (required)">
+  </div>
+
+  <div class="form-row">
+    <label for="upd-name">Name</label>
+    <input id="upd-name" type="text" placeholder="New name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-role">Role</label>
+    <select id="upd-role">
+      <option value="">(no change)</option>
+      <option value="ADMIN">ADMIN</option>
+      <option value="CLIENT">CLIENT</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="upd-address">Address</label>
+    <input id="upd-address" type="text" placeholder="New address (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-age">Age</label>
+    <input id="upd-age" type="number" min="0" placeholder="New age (optional)">
+  </div>
+
+  <button onclick="updatePerson()">
+    <span class="badge-post">PUT</span> Update Person
+  </button>
+
+  <hr>
+
+  <!-- Delete Person -->
+  <div class="form-row">
+    <label for="del-person-id">Person ID (UUID)</label>
+    <input id="del-person-id" type="text" placeholder="UUID of Person to delete">
+  </div>
+
+  <button onclick="deletePerson()" style="background:#e53935;">
+    DELETE Person
+  </button>
+</fieldset>
+
+
+  <!-- Formular pentru creare device -->
+  <fieldset>
+  <legend>Insert Device (device-service)</legend>
+
+  <div class="form-row">
+    <label for="dev-name">Name</label>
+    <input id="dev-name" type="text" placeholder="PC, Frigider, TV">
+  </div>
+  <div class="form-row">
+    <label for="dev-max-consumption">Max consumption</label>
+    <input id="dev-max-consumption" type="number" step="0.01" min="0" placeholder="6">
+  </div>
+  <div class="form-row">
+    <label for="dev-owner-id">Owner ID (UUID)</label>
+    <input id="dev-owner-id" type="text" placeholder="UUID of Person (ownerId)">
+  </div>
+
+  <button onclick="insertDeviceFromForm()">
+    <span class="badge-post">POST</span> Insert Device
+  </button>
+</fieldset>
+
+<fieldset>
+  <legend>Manage Devices (update / delete)</legend>
+
+  <!-- Update Device -->
+  <div class="form-row">
+    <label for="upd-device-id">Device ID (UUID)</label>
+    <input id="upd-device-id" type="text" placeholder="UUID of Device to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-name">Name</label>
+    <input id="upd-dev-name" type="text" placeholder="New device name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-max-consumption">Max consumption</label>
+    <input id="upd-dev-max-consumption" type="number" step="0.01" min="0" placeholder="New max consumption (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-owner-id">Owner ID (UUID)</label>
+    <input id="upd-dev-owner-id" type="text" placeholder="New ownerId (optional)">
+  </div>
+
+  <button onclick="updateDevice()">
+    <span class="badge-post">PUT</span> Update Device
+  </button>
+
+  <hr>
+
+  <!-- Delete Device -->
+  <div class="form-row">
+    <label for="del-device-id">Device ID (UUID)</label>
+    <input id="del-device-id" type="text" placeholder="UUID of Device to delete">
+  </div>
+
+  <button onclick="deleteDevice()" style="background:#e53935;">
+    DELETE Device
+  </button>
+</fieldset>
+
+
 
   <!-- Devices for person -->
   <fieldset>
@@ -161,11 +277,8 @@
   <pre id="result">Click a button or submit a form...</pre>
 
   <script>
-    // IMPORTANT:
-    // Folosește acest HTML servit de Traefik pe http://localhost (nu din file://)
-    // astfel încât cererile către /people și /devices să fie same-origin.
-
-    const BASE_URL = ''; // same origin: http://localhost
+    // Same-origin: index.html este servit prin Traefik de pe http://localhost
+    const BASE_URL = ''; // requests merg la /people, /devices pe același host
 
     // Basic Auth: antonio/parola123
     const AUTH_HEADER = 'Basic ' + btoa('antonio:parola123');
@@ -206,24 +319,37 @@
       }
     }
 
-    // ---- BUTTON ACTIONS ----
+    // ---- HEALTH / LISTĂRI ----
 
-    function checkPeople() {
-      // GET /people
-      callApi('/people');
-    }
+    async function checkBackend() {
+      show('Checking people-service and device-service...');
+      try {
+        const [peopleRes, deviceRes] = await Promise.all([
+          fetch(BASE_URL + '/people', { headers: { 'Authorization': AUTH_HEADER }}),
+          fetch(BASE_URL + '/devices', { headers: { 'Authorization': AUTH_HEADER }})
+        ]);
 
-    function checkDevices() {
-      // GET /devices
-      callApi('/devices');
+        const text =
+          'Health check:\n' +
+          'people-service: ' + peopleRes.status + '\n' +
+          'device-service: ' + deviceRes.status + '\n';
+
+        show(text);
+      } catch (err) {
+        show('Health check failed:\n' + err);
+      }
     }
 
     function getAllPersons() {
-      // GET /people
       callApi('/people');
     }
 
-    // POST /people cu date luate din formular
+    function getAllDevices() {
+      callApi('/devices');
+    }
+
+    // ---- INSERT PERSON ----
+
     async function insertPersonFromForm() {
       const person = {
         username: document.getElementById('username').value || null,
@@ -234,7 +360,6 @@
         age: parseInt(document.getElementById('age').value, 10) || null
       };
 
-
       await callApi('/people', {
         method: 'POST',
         headers: {
@@ -244,7 +369,85 @@
       });
     }
 
-    // GET /devices/owner/{personId}
+    // ---- UPDATE / DELETE PERSON ----
+
+    async function updatePerson() {
+      const id = document.getElementById('upd-person-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Person ID (UUID) pentru update.');
+        return;
+      }
+
+      const username = document.getElementById('upd-username').value.trim();
+      const password = document.getElementById('upd-password').value.trim();
+
+      if (!username || !password) {
+        alert('Username și password sunt obligatorii la update (backend validation).');
+        return;
+      }
+
+      const name = document.getElementById('upd-name').value.trim();
+      const role = document.getElementById('upd-role').value;
+      const address = document.getElementById('upd-address').value.trim();
+      const ageStr = document.getElementById('upd-age').value;
+
+      const body = {
+        username: username,
+        password: password,
+        name: name || null,
+        address: address || null,
+        role: role || null,
+        age: ageStr ? parseInt(ageStr, 10) : null
+      };
+
+      await callApi('/people/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    }
+
+
+    async function deletePerson() {
+      const id = document.getElementById('del-person-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Person ID (UUID) pentru delete.');
+        return;
+      }
+
+      await callApi('/people/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    }
+
+
+    // ---- INSERT DEVICE ----
+
+    async function insertDeviceFromForm() {
+      const name = document.getElementById('dev-name').value || null;
+      const maxConsStr = document.getElementById('dev-max-consumption').value;
+      const ownerId = document.getElementById('dev-owner-id').value.trim();
+
+      const device = {
+        name: name,
+        consumMaxim: maxConsStr ? parseFloat(maxConsStr) : null,
+        ownerId: ownerId || null
+      };
+
+      await callApi('/devices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(device)
+      });
+    }
+
+
+    // ---- DEVICES BY PERSON ----
+
     async function getDevicesForPersonFromInput() {
       const personId = document.getElementById('personId').value.trim();
       if (!personId) {
@@ -253,6 +456,52 @@
       }
       await callApi('/devices/owner/' + encodeURIComponent(personId));
     }
+
+    // ---- UPDATE / DELETE DEVICE ----
+
+    async function updateDevice() {
+      const id = document.getElementById('upd-device-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Device ID (UUID) pentru update.');
+        return;
+      }
+
+      const name = document.getElementById('upd-dev-name').value.trim();
+      const maxStr = document.getElementById('upd-dev-max-consumption').value;
+      const ownerId = document.getElementById('upd-dev-owner-id').value.trim();
+
+      const body = {};
+
+      if (name) body.name = name;
+      if (maxStr) body.consumMaxim = parseFloat(maxStr);
+      if (ownerId) body.ownerId = ownerId;
+
+      if (Object.keys(body).length === 0) {
+        alert('Completează măcar un câmp de actualizat.');
+        return;
+      }
+
+      await callApi('/devices/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    }
+
+    async function deleteDevice() {
+      const id = document.getElementById('del-device-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Device ID (UUID) pentru delete.');
+        return;
+      }
+
+      await callApi('/devices/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    }
+
   </script>
 </body>
 </html>
