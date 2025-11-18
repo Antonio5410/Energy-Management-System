@@ -2,68 +2,250 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Microservices Dashboard</title>
+  <title>Energy Management Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-    button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-    button:hover { background: #45a049; }
-    pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    fieldset {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px 15px 15px;
+      margin-bottom: 20px;
+    }
+    legend {
+      font-weight: bold;
+      padding: 0 5px;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .form-row label {
+      min-width: 90px;
+      font-size: 13px;
+    }
+    .form-row input,
+    .form-row select {
+      flex: 1;
+      min-width: 120px;
+      padding: 4px 6px;
+      font-size: 13px;
+    }
+    .inline-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 13px;
+    }
+    small {
+      color: #666;
+    }
+    .badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
+    .badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
   </style>
 </head>
 <body>
-  <h1>Welcome to the Microservices Dashboard</h1>
-  <button onclick="callApi('/api/people')">Check City Service</button>
-  <button onclick="callApi('/api/devices')">Check Device Service</button>
-  <button onclick="insertPerson()">Insert New Person</button>
-  <button onclick="getAllPersons()">Get All Persons</button>
-  <button onclick="callApi('/api/people/device-status')">Check Device from City Service</button>
+  <h1>Energy Management Dashboard</h1>
+  <p class="subtitle">
+    Comunică cu <strong>people-service</strong> și <strong>device-service</strong> prin Traefik.<br>
+    <small>Basic Auth: <code>antonio/parola123</code> (header <code>Authorization: Basic ...</code>)</small>
+  </p>
+
+  <!-- Butoane simple de health-check -->
+  <div class="buttons">
+    <button onclick="checkPeople()">
+      <span class="badge-get">GET</span> Check People Service
+    </button>
+    <button onclick="checkDevices()">
+      <span class="badge-get">GET</span> Check Device Service
+    </button>
+    <button onclick="getAllPersons()">
+      <span class="badge-get">GET</span> Get All Persons
+    </button>
+  </div>
+
+  <!-- Formular pentru creare person -->
+  <fieldset>
+    <legend>Insert Person (people-service)</legend>
+
+    <div class="form-row">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="jdoe" value="demo_user">
+    </div>
+    <div class="form-row">
+      <label for="name">Name</label>
+      <input id="name" type="text" placeholder="John Doe" value="Demo User">
+    </div>
+    <div class="form-row">
+      <label for="role">Role</label>
+      <select id="role">
+        <option value="ADMIN">ADMIN</option>
+        <option value="CLIENT" selected>CLIENT</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="address">Address</label>
+      <input id="address" type="text" placeholder="Cluj-Napoca" value="Cluj-Napoca">
+    </div>
+    <div class="form-row">
+      <label for="age">Age</label>
+      <input id="age" type="number" min="0" value="25">
+    </div>
+
+    <button onclick="insertPersonFromForm()">
+      <span class="badge-post">POST</span> Insert Person
+    </button>
+  </fieldset>
+
+  <!-- Devices for person -->
+  <fieldset>
+    <legend>Devices for Person (device-service)</legend>
+    <div class="inline-group">
+      <label for="personId">Person ID (UUID)</label>
+      <input id="personId" type="text" placeholder="UUID from /people response">
+      <button onclick="getDevicesForPersonFromInput()">
+        <span class="badge-get">GET</span> Get Devices for Person
+      </button>
+    </div>
+    <small>Ia un ID din răspunsul de la <strong>Get All Persons</strong> și pune-l aici.</small>
+  </fieldset>
+
   <p>Backend response:</p>
-  <pre id="result">Click a button to fetch data...</pre>
+  <pre id="result">Click a button or submit a form...</pre>
 
   <script>
-    async function callApi(path) {
-      const response = await fetch(path, { headers: { 'Authorization': 'Basic ' + btoa('user:test') } });
-      const text = await response.text();
+    // IMPORTANT:
+    // Folosește acest HTML servit de Traefik pe http://localhost (nu din file://)
+    // astfel încât cererile către /people și /devices să fie same-origin.
+
+    const BASE_URL = ''; // same origin: http://localhost
+
+    // Basic Auth: antonio/parola123
+    const AUTH_HEADER = 'Basic ' + btoa('antonio:parola123');
+
+    function show(text) {
       document.getElementById('result').innerText = text;
     }
 
-    async function insertPerson() {
-    const person = {
-      name: "John Doe",
-      address: "123 Main Street",
-      age: 30
-    };
+    async function callApi(path, options = {}) {
+      try {
+        const response = await fetch(BASE_URL + path, {
+          method: options.method || 'GET',
+          headers: {
+            'Authorization': AUTH_HEADER,
+            ...(options.headers || {})
+          },
+          body: options.body || null
+        });
 
-    const response = await fetch('/api/people', {  // include /api/city prefix
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa('user:test'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(person)
-    });
+        const contentType = response.headers.get('Content-Type') || '';
+        let bodyText;
 
-    if (response.ok) {
-      document.getElementById('result').innerText = `Person created!`;
-    } else {
-      const errorText = await response.text();
-      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          bodyText = JSON.stringify(json, null, 2);
+        } else {
+          bodyText = await response.text();
+        }
+
+        show(
+          'URL: ' + (BASE_URL + path) +
+          '\nMethod: ' + (options.method || 'GET') +
+          '\nStatus: ' + response.status +
+          '\n\n' + bodyText
+        );
+      } catch (err) {
+        show('Request failed:\n' + err);
+      }
     }
-  }
 
-  async function getAllPersons() {
-    const response = await fetch('/api/people', {
-      headers: { 'Authorization': 'Basic ' + btoa('user:test') }
-    });
+    // ---- BUTTON ACTIONS ----
 
-    if (response.ok) {
-      const people = await response.json();
-      document.getElementById('result').innerText = JSON.stringify(people, null, 2);
-    } else {
-      const errorText = await response.text();
-      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+    function checkPeople() {
+      // GET /people
+      callApi('/people');
     }
-  }
+
+    function checkDevices() {
+      // GET /devices
+      callApi('/devices');
+    }
+
+    function getAllPersons() {
+      // GET /people
+      callApi('/people');
+    }
+
+    // POST /people cu date luate din formular
+    async function insertPersonFromForm() {
+      const person = {
+        username: document.getElementById('username').value || null,
+        role: document.getElementById('role').value || null,
+        name: document.getElementById('name').value || null,
+        address: document.getElementById('address').value || null,
+        age: parseInt(document.getElementById('age').value, 10) || null
+      };
+
+      await callApi('/people', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(person)
+      });
+    }
+
+    // GET /devices/owner/{personId}
+    async function getDevicesForPersonFromInput() {
+      const personId = document.getElementById('personId').value.trim();
+      if (!personId) {
+        alert('Te rog introdu un UUID pentru persoană.');
+        return;
+      }
+      await callApi('/devices/owner/' + encodeURIComponent(personId));
+    }
   </script>
 </body>
 </html>
