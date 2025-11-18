@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "credentials")
-public class Credential {
+public class Credentials {
 
     @Id
     @GeneratedValue

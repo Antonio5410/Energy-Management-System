@@ -1,4 +1,6 @@
 package com.example.demo.entities;
 
-public class Role {
+public enum Role {
+    ADMIN,
+    CLIENT
 }
