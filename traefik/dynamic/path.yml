@@ -1,14 +1,14 @@
 http:
   routers:
-    # # Frontend router
-    # nginx-frontend:
-    #   rule: "Host(`localhost`)"
-    #   entryPoints:
-    #     - web
-    #   service: nginx-service
-    #   priority: 10  # higher priority than API routers
+    # Frontend (static HTML)
+    nginx-frontend:
+      rule: "Host(`localhost`) && PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: nginx-frontend
+      priority: 1   # prioritate mai mică decât API-urile
 
-    # People service router
+    # People service - API
     backend-people:
       rule: "Host(`localhost`) && PathPrefix(`/people`)"
       entryPoints:
@@ -16,8 +16,9 @@ http:
       middlewares:
         - auth-basic
       service: people-service
+      priority: 20  # mai mare decât frontend
 
-    # Device service router
+    # Device service - API
     backend-device:
       rule: "Host(`localhost`) && PathPrefix(`/devices`)"
       entryPoints:
@@ -25,39 +26,31 @@ http:
       middlewares:
         - auth-basic
       service: device-service
+      priority: 20  # la fel, peste frontend
 
   services:
-    # nginx-service:
-    #   loadBalancer:
-    #     servers:
-    #       - url: "http://nginx:80"
-    #     passHostHeader: true
+    # Nginx frontend – numele corect în rețeaua Docker
+    nginx-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://nginx-frontend:80"
+        passHostHeader: true
 
+    # People service backend
     people-service:
       loadBalancer:
         servers:
           - url: "http://people-service:8080"
 
+    # Device service backend
     device-service:
       loadBalancer:
         servers:
           - url: "http://device-service:8080"
 
   middlewares:
-    # # Strip prefix for people service
-    # strip-people-prefix:
-    #   stripPrefix:
-    #     prefixes:
-    #       - "/people"
-
-    # # Strip prefix for device service
-    # strip-device-prefix:
-    #   stripPrefix:
-    #     prefixes:
-    #       - "/devices"
-
-    # Basic auth for APIs
+    # Basic auth pt. /people și /devices
     auth-basic:
       basicAuth:
         users:
-          - "antonio:$2y$05$7CPPtiu9zKraabRIGgiMFuREtd8qp9FcocfSPQe9RS.mtwnz2/2Ji" #password = parola123
+          - "antonio:$2y$05$7CPPtiu9zKraabRIGgiMFuREtd8qp9FcocfSPQe9RS.mtwnz2/2Ji"

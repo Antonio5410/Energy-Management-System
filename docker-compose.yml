@@ -1,103 +1,3 @@
-# version: '3.8'
-
-# services:
-#   traefik:
-#     image: traefik:v3.0
-#     container_name: traefik
-#     command:
-#       - "--api.insecure=true"
-#       - "--providers.docker=true"
-#       - "--entrypoints.web.address=:80"
-#       - "log.level=DEBUG"
-#     ports:
-#       - "80:80"
-#       - "8085:8080"  # Traefik dashboard (optional)
-#     volumes:
-#       - ./traefik/traefik.yml:/etc/traefik/traefik.yml
-#       - ./traefik/dynamic:/etc/traefik/dynamic
-#       - /var/run/docker.sock:/var/run/docker.sock:ro
-#     networks:
-#       - proxy-network
-
-#   nginx:
-#     build: ./frontend
-#     container_name: nginx
-#     restart: always
-#     #ports:
-#       #- "3000:80"
-#     networks:
-#       - proxy-network
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.nginx-frontend.rule=Host(`localhost`)"
-#       - "traefik.http.routers.nginx-frontend.entrypoints=web"
-
-#   energy-people-db:
-#     image: postgres:15
-#     container_name: energy-people-db
-#     environment:
-#       POSTGRES_DB: energy-people-db
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: root
-#     volumes:
-#       - people-data:/var/lib/postgresql/data
-#     networks:
-#       - proxy-network
-
-#   energy-device-db:
-#     image: postgres:15
-#     container_name: energy-device-db
-#     environment:
-#       POSTGRES_DB: energy-device-db
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: root
-#     volumes:
-#       - device-data:/var/lib/postgresql/data
-#     networks:
-#       - proxy-network
-
-#   people-service:
-#     build: ./people-service
-#     container_name: people-service
-#     environment:
-#       DB_IP: energy-people-db
-#       DB_PORT: 5432
-#       DB_USER: postgres
-#       DB_PASSWORD: root
-#       DB_DBNAME: energy-people-db
-#       PORT: 8080
-#     ports:
-#       - "8082:8080"
-#     depends_on:
-#       - energy-people-db
-#     networks:
-#       - proxy-network
-
-#   device-service:
-#     build: ./device-service
-#     #container_name: device-service
-#     environment:
-#       DB_IP: energy-device-db
-#       DB_PORT: 5432
-#       DB_USER: postgres
-#       DB_PASSWORD: root
-#       DB_DBNAME: energy-device-db
-#       PORT: 8080
-#     ports:
-#       - "8081:8080"
-#     depends_on:
-#       - energy-device-db
-#     networks:
-#       - proxy-network
-
-# volumes:
-#   people-data:
-#   device-data:
-
-# networks:
-#   proxy-network:
-#     driver: bridge
-
 services:
   reverse-proxy:
     image: traefik:v3.2
@@ -110,7 +10,6 @@ services:
       - --log.level=DEBUG
       - --providers.docker=true
       - --entrypoints.web.address=:80
-      # NU mai setezi providers.file aici, îl lași în traefik.yml
     ports:
       - "80:80"
       - "8080:8080"
@@ -129,7 +28,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-people-db
-    networks: [proxy-network]
+    networks:
+      - proxy-network
 
   energy-device-db:
     image: postgres:15
@@ -137,10 +37,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-device-db
-    networks: [proxy-network]
-    # ports:
-      # - "5433:5432"  # Exposează pentru acces local la baza de date (opțional)
-    # networks: [proxy-network]
+    networks:
+      - proxy-network
 
   people-service:
     image: energy-management-deploy-example-people-service:latest
@@ -154,22 +52,18 @@ services:
       DB_IP: energy-people-db
       DB_PORT: 5432
       PORT: 8080
-      # SERVER_PORT: 8081
     depends_on:
       - energy-people-db
-    networks: [proxy-network]
-    # IMPORTANT: scoatem ports: ... ; expunem doar prin Traefik
+    networks:
+      - proxy-network
     labels:
       - traefik.enable=true
-      # Traefik Router -> dacă URL începe cu /people, du-l la people-service
       - traefik.http.routers.people.rule=PathPrefix(`/people`)
       - traefik.http.routers.people.entrypoints=web
-      # Spune-i lui Traefik pe ce port ascultă containerul în interior
       - traefik.http.services.people.loadbalancer.server.port=8080
-      # Adaugă middleware de autentificare basic
       - traefik.http.routers.people.middlewares=auth-basic@file
     deploy:
-      replicas: 2   # <— Load Balancing între 2 instanțe (poți și cu --scale)  :contentReference[oaicite:1]{index=1}
+      replicas: 2
 
   device-service:
     image: energy-management-deploy-example-device-service:latest
@@ -183,19 +77,31 @@ services:
       DB_IP: energy-device-db
       DB_PORT: 5432
       PORT: 8080
-      # SERVER_PORT: 8082
     depends_on:
       - energy-device-db
-    networks: [proxy-network]
+    networks:
+      - proxy-network
     labels:
       - traefik.enable=true
       - traefik.http.routers.devices.rule=PathPrefix(`/devices`)
       - traefik.http.routers.devices.entrypoints=web
       - traefik.http.services.devices.loadbalancer.server.port=8080
-      # Adaugă middleware de autentificare basic
       - traefik.http.routers.devices.middlewares=auth-basic@file
     deploy:
       replicas: 1
+
+  nginx-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nginx-frontend
+    networks:
+      - proxy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nginx-frontend.rule=Host(`localhost`)
+      - traefik.http.routers.nginx-frontend.entrypoints=web
+      - traefik.http.services.nginx-frontend.loadbalancer.server.port=80
 
 networks:
   proxy-network:
