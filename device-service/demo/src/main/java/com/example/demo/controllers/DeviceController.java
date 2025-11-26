@@ -58,6 +58,6 @@ public class DeviceController {
 
     @GetMapping("/owner/{ownerId}")
     public ResponseEntity<List<DeviceDTO>> getByOwner(@PathVariable UUID ownerId) {
-        return ResponseEntity.ok(deviceService.getDevicesByOwner(ownerId));
+        return ResponseEntity.ok(deviceService.findDevicesByOwner(ownerId));
     }
 }
