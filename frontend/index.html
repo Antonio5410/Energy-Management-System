@@ -2,68 +2,506 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Microservices Dashboard</title>
+  <title>Energy Management Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-    button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-    button:hover { background: #45a049; }
-    pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    fieldset {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px 15px 15px;
+      margin-bottom: 20px;
+    }
+    legend {
+      font-weight: bold;
+      padding: 0 5px;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .form-row label {
+      min-width: 90px;
+      font-size: 13px;
+    }
+    .form-row input,
+    .form-row select {
+      flex: 1;
+      min-width: 120px;
+      padding: 4px 6px;
+      font-size: 13px;
+    }
+    .inline-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 13px;
+    }
+    small {
+      color: #666;
+    }
+    .badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
+    .badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
   </style>
 </head>
 <body>
-  <h1>Welcome to the Microservices Dashboard</h1>
-  <button onclick="callApi('/api/people')">Check City Service</button>
-  <button onclick="callApi('/api/devices')">Check Device Service</button>
-  <button onclick="insertPerson()">Insert New Person</button>
-  <button onclick="getAllPersons()">Get All Persons</button>
-  <button onclick="callApi('/api/people/device-status')">Check Device from City Service</button>
+  <h1>Energy Management Dashboard</h1>
+  <p class="subtitle">
+    Comunică cu <strong>people-service</strong> și <strong>device-service</strong> prin Traefik.<br>
+    <small>Basic Auth: <code>antonio/parola123</code> (header <code>Authorization: Basic ...</code>)</small>
+  </p>
+
+  <!-- Butoane overview -->
+  <div class="buttons">
+    <button onclick="checkBackend()">
+      <span class="badge-get">GET</span> Check People & Device Services
+    </button>
+    <button onclick="getAllPersons()">
+      <span class="badge-get">GET</span> Get All Persons
+    </button>
+    <button onclick="getAllDevices()">
+      <span class="badge-get">GET</span> Get All Devices
+    </button>
+  </div>
+
+  <!-- Formular pentru creare person -->
+  <fieldset>
+    <legend>Insert Person (people-service)</legend>
+
+    <div class="form-row">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="jdoe" value="demo_user">
+    </div>
+    <div class="form-row">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="parola_userului" value="parola123">
+    </div>
+    <div class="form-row">
+      <label for="name">Name</label>
+      <input id="name" type="text" placeholder="John Doe" value="Demo User">
+    </div>
+    <div class="form-row">
+      <label for="role">Role</label>
+      <select id="role">
+        <option value="ADMIN">ADMIN</option>
+        <option value="CLIENT" selected>CLIENT</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="address">Address</label>
+      <input id="address" type="text" placeholder="Cluj-Napoca" value="Cluj-Napoca">
+    </div>
+    <div class="form-row">
+      <label for="age">Age</label>
+      <input id="age" type="number" min="0" value="25">
+    </div>
+
+    <button onclick="insertPersonFromForm()">
+      <span class="badge-post">POST</span> Insert Person
+    </button>
+  </fieldset>
+  <fieldset>
+  <legend>Manage Persons (update / delete)</legend>
+
+  <!-- Update Person -->
+  <div class="form-row">
+    <label for="upd-person-id">Person ID (UUID)</label>
+    <input id="upd-person-id" type="text" placeholder="UUID of Person to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-username">Username</label>
+    <input id="upd-username" type="text" placeholder="New username (required)">
+  </div>
+  <div class="form-row">
+    <label for="upd-password">Password</label>
+    <input id="upd-password" type="password" placeholder="New password (required)">
+  </div>
+
+  <div class="form-row">
+    <label for="upd-name">Name</label>
+    <input id="upd-name" type="text" placeholder="New name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-role">Role</label>
+    <select id="upd-role">
+      <option value="">(no change)</option>
+      <option value="ADMIN">ADMIN</option>
+      <option value="CLIENT">CLIENT</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="upd-address">Address</label>
+    <input id="upd-address" type="text" placeholder="New address (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-age">Age</label>
+    <input id="upd-age" type="number" min="0" placeholder="New age (optional)">
+  </div>
+
+  <button onclick="updatePerson()">
+    <span class="badge-post">PUT</span> Update Person
+  </button>
+
+  <hr>
+
+  <!-- Delete Person -->
+  <div class="form-row">
+    <label for="del-person-id">Person ID (UUID)</label>
+    <input id="del-person-id" type="text" placeholder="UUID of Person to delete">
+  </div>
+
+  <button onclick="deletePerson()" style="background:#e53935;">
+    DELETE Person
+  </button>
+</fieldset>
+
+
+  <!-- Formular pentru creare device -->
+  <fieldset>
+  <legend>Insert Device (device-service)</legend>
+
+  <div class="form-row">
+    <label for="dev-name">Name</label>
+    <input id="dev-name" type="text" placeholder="PC, Frigider, TV">
+  </div>
+  <div class="form-row">
+    <label for="dev-max-consumption">Max consumption</label>
+    <input id="dev-max-consumption" type="number" step="0.01" min="0" placeholder="6">
+  </div>
+  <div class="form-row">
+    <label for="dev-owner-id">Owner ID (UUID)</label>
+    <input id="dev-owner-id" type="text" placeholder="UUID of Person (ownerId)">
+  </div>
+
+  <button onclick="insertDeviceFromForm()">
+    <span class="badge-post">POST</span> Insert Device
+  </button>
+</fieldset>
+
+<fieldset>
+  <legend>Manage Devices (update / delete)</legend>
+
+  <!-- Update Device -->
+  <div class="form-row">
+    <label for="upd-device-id">Device ID (UUID)</label>
+    <input id="upd-device-id" type="text" placeholder="UUID of Device to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-name">Name</label>
+    <input id="upd-dev-name" type="text" placeholder="New device name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-max-consumption">Max consumption</label>
+    <input id="upd-dev-max-consumption" type="number" step="0.01" min="0" placeholder="New max consumption (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-owner-id">Owner ID (UUID)</label>
+    <input id="upd-dev-owner-id" type="text" placeholder="New ownerId (optional)">
+  </div>
+
+  <button onclick="updateDevice()">
+    <span class="badge-post">PUT</span> Update Device
+  </button>
+
+  <hr>
+
+  <!-- Delete Device -->
+  <div class="form-row">
+    <label for="del-device-id">Device ID (UUID)</label>
+    <input id="del-device-id" type="text" placeholder="UUID of Device to delete">
+  </div>
+
+  <button onclick="deleteDevice()" style="background:#e53935;">
+    DELETE Device
+  </button>
+</fieldset>
+
+
+
+  <!-- Devices for person -->
+  <fieldset>
+    <legend>Devices for Person (device-service)</legend>
+    <div class="inline-group">
+      <label for="personId">Person ID (UUID)</label>
+      <input id="personId" type="text" placeholder="UUID from /people response">
+      <button onclick="getDevicesForPersonFromInput()">
+        <span class="badge-get">GET</span> Get Devices for Person
+      </button>
+    </div>
+    <small>Ia un ID din răspunsul de la <strong>Get All Persons</strong> și pune-l aici.</small>
+  </fieldset>
+
   <p>Backend response:</p>
-  <pre id="result">Click a button to fetch data...</pre>
+  <pre id="result">Click a button or submit a form...</pre>
 
   <script>
-    async function callApi(path) {
-      const response = await fetch(path, { headers: { 'Authorization': 'Basic ' + btoa('user:test') } });
-      const text = await response.text();
+    // Same-origin: index.html este servit prin Traefik de pe http://localhost
+    const BASE_URL = ''; // requests merg la /people, /devices pe același host
+
+    // Basic Auth: antonio/parola123
+    const AUTH_HEADER = 'Basic ' + btoa('antonio:parola123');
+
+    function show(text) {
       document.getElementById('result').innerText = text;
     }
 
-    async function insertPerson() {
-    const person = {
-      name: "John Doe",
-      address: "123 Main Street",
-      age: 30
-    };
+    async function callApi(path, options = {}) {
+      try {
+        const response = await fetch(BASE_URL + path, {
+          method: options.method || 'GET',
+          headers: {
+            'Authorization': AUTH_HEADER,
+            ...(options.headers || {})
+          },
+          body: options.body || null
+        });
 
-    const response = await fetch('/api/people', {  // include /api/city prefix
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa('user:test'),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(person)
-    });
+        const contentType = response.headers.get('Content-Type') || '';
+        let bodyText;
 
-    if (response.ok) {
-      document.getElementById('result').innerText = `Person created!`;
-    } else {
-      const errorText = await response.text();
-      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          bodyText = JSON.stringify(json, null, 2);
+        } else {
+          bodyText = await response.text();
+        }
+
+        show(
+          'URL: ' + (BASE_URL + path) +
+          '\nMethod: ' + (options.method || 'GET') +
+          '\nStatus: ' + response.status +
+          '\n\n' + bodyText
+        );
+      } catch (err) {
+        show('Request failed:\n' + err);
+      }
     }
-  }
 
-  async function getAllPersons() {
-    const response = await fetch('/api/people', {
-      headers: { 'Authorization': 'Basic ' + btoa('user:test') }
-    });
+    // ---- HEALTH / LISTĂRI ----
 
-    if (response.ok) {
-      const people = await response.json();
-      document.getElementById('result').innerText = JSON.stringify(people, null, 2);
-    } else {
-      const errorText = await response.text();
-      document.getElementById('result').innerText = `Error: ${response.status} ${errorText}`;
+    async function checkBackend() {
+      show('Checking people-service and device-service...');
+      try {
+        const [peopleRes, deviceRes] = await Promise.all([
+          fetch(BASE_URL + '/people', { headers: { 'Authorization': AUTH_HEADER }}),
+          fetch(BASE_URL + '/devices', { headers: { 'Authorization': AUTH_HEADER }})
+        ]);
+
+        const text =
+          'Health check:\n' +
+          'people-service: ' + peopleRes.status + '\n' +
+          'device-service: ' + deviceRes.status + '\n';
+
+        show(text);
+      } catch (err) {
+        show('Health check failed:\n' + err);
+      }
     }
-  }
+
+    function getAllPersons() {
+      callApi('/people');
+    }
+
+    function getAllDevices() {
+      callApi('/devices');
+    }
+
+    // ---- INSERT PERSON ----
+
+    async function insertPersonFromForm() {
+      const person = {
+        username: document.getElementById('username').value || null,
+        password: document.getElementById('password').value || null,
+        role: document.getElementById('role').value || null,
+        name: document.getElementById('name').value || null,
+        address: document.getElementById('address').value || null,
+        age: parseInt(document.getElementById('age').value, 10) || null
+      };
+
+      await callApi('/people', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(person)
+      });
+    }
+
+    // ---- UPDATE / DELETE PERSON ----
+
+    async function updatePerson() {
+      const id = document.getElementById('upd-person-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Person ID (UUID) pentru update.');
+        return;
+      }
+
+      const username = document.getElementById('upd-username').value.trim();
+      const password = document.getElementById('upd-password').value.trim();
+
+      if (!username || !password) {
+        alert('Username și password sunt obligatorii la update (backend validation).');
+        return;
+      }
+
+      const name = document.getElementById('upd-name').value.trim();
+      const role = document.getElementById('upd-role').value;
+      const address = document.getElementById('upd-address').value.trim();
+      const ageStr = document.getElementById('upd-age').value;
+
+      const body = {
+        username: username,
+        password: password,
+        name: name || null,
+        address: address || null,
+        role: role || null,
+        age: ageStr ? parseInt(ageStr, 10) : null
+      };
+
+      await callApi('/people/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    }
+
+
+    async function deletePerson() {
+      const id = document.getElementById('del-person-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Person ID (UUID) pentru delete.');
+        return;
+      }
+
+      await callApi('/people/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    }
+
+
+    // ---- INSERT DEVICE ----
+
+    async function insertDeviceFromForm() {
+      const name = document.getElementById('dev-name').value || null;
+      const maxConsStr = document.getElementById('dev-max-consumption').value;
+      const ownerId = document.getElementById('dev-owner-id').value.trim();
+
+      const device = {
+        name: name,
+        consumMaxim: maxConsStr ? parseFloat(maxConsStr) : null,
+        ownerId: ownerId || null
+      };
+
+      await callApi('/devices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(device)
+      });
+    }
+
+
+    // ---- DEVICES BY PERSON ----
+
+    async function getDevicesForPersonFromInput() {
+      const personId = document.getElementById('personId').value.trim();
+      if (!personId) {
+        alert('Te rog introdu un UUID pentru persoană.');
+        return;
+      }
+      await callApi('/devices/owner/' + encodeURIComponent(personId));
+    }
+
+    // ---- UPDATE / DELETE DEVICE ----
+
+    async function updateDevice() {
+      const id = document.getElementById('upd-device-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Device ID (UUID) pentru update.');
+        return;
+      }
+
+      const name = document.getElementById('upd-dev-name').value.trim();
+      const maxStr = document.getElementById('upd-dev-max-consumption').value;
+      const ownerId = document.getElementById('upd-dev-owner-id').value.trim();
+
+      const body = {};
+
+      if (name) body.name = name;
+      if (maxStr) body.consumMaxim = parseFloat(maxStr);
+      if (ownerId) body.ownerId = ownerId;
+
+      if (Object.keys(body).length === 0) {
+        alert('Completează măcar un câmp de actualizat.');
+        return;
+      }
+
+      await callApi('/devices/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    }
+
+    async function deleteDevice() {
+      const id = document.getElementById('del-device-id').value.trim();
+      if (!id) {
+        alert('Te rog introdu Device ID (UUID) pentru delete.');
+        return;
+      }
+
+      await callApi('/devices/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    }
+
   </script>
 </body>
 </html>
