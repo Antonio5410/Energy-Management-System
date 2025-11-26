@@ -40,6 +40,20 @@ services:
     networks:
       - proxy-network
 
+  energy-monitoring-db:
+    image: postgres:15
+    container_name: energy-monitoring-db
+    environment:
+      POSTGRES_DB: energy-monitoring-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5435:5432" # alt port host ca să nu se bată cu celelalte DB-uri
+    networks:
+      - proxy-network
+    volumes:
+      - monitoring_db_data:/var/lib/postgresql/data
+
   people-service:
     image: energy-management-deploy-example-people-service:latest
     build:
@@ -107,7 +121,7 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq-broker
     ports:
-      - "5672:5672"    # portul AMQP pentru aplicațiile tale
+      - "5672:5672"    # portul AMQP pentru aplicațiile mele
       - "15672:15672"  # interfața web de admin RabbitMQ
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -124,3 +138,4 @@ networks:
 
 volumes:
   traefik_logs:
+  monitoring_db_data:
