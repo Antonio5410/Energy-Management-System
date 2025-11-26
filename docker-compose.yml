@@ -102,9 +102,25 @@ services:
       - traefik.http.routers.nginx-frontend.rule=Host(`localhost`)
       - traefik.http.routers.nginx-frontend.entrypoints=web
       - traefik.http.services.nginx-frontend.loadbalancer.server.port=80
+  
+  rabbitmq-broker:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-broker
+    ports:
+      - "5672:5672"    # portul AMQP pentru aplicațiile tale
+      - "15672:15672"  # interfața web de admin RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - proxy-network
+
 
 networks:
+  shared-network:
+    driver: bridge
   proxy-network:
+    driver: bridge  
 
 volumes:
   traefik_logs:
