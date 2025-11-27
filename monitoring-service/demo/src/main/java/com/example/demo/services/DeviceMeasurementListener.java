@@ -1,4 +1,4 @@
-package com.example.demo.services;
+package com.example.demo.services; // sau .service, cum ai tu pachetul
 
 import com.example.demo.config.RabbitConfig;
 import com.example.demo.dtos.DeviceMeasurementMessage;
@@ -23,20 +23,21 @@ public class DeviceMeasurementListener {
     private static final Logger logger = LoggerFactory.getLogger(DeviceMeasurementListener.class);
 
     private final HourlyConsumptionRepository hourlyConsumptionRepository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public DeviceMeasurementListener(HourlyConsumptionRepository hourlyConsumptionRepository, ObjectMapper objectMapper) {
+    public DeviceMeasurementListener(HourlyConsumptionRepository hourlyConsumptionRepository) {
         this.hourlyConsumptionRepository = hourlyConsumptionRepository;
-        this.objectMapper = objectMapper;
     }
 
     @Transactional
-    @RabbitListener(queues = RabbitConfig.DEVICE_DATA_QUEUE)
+    @RabbitListener(
+            queues = RabbitConfig.DEVICE_DATA_QUEUE,
+            containerFactory = "myRabbitListenerContainerFactory"
+    )
     public void handleDeviceMeasurement(String payload) {
         logger.info("Received raw message payload: {}", payload);
 
         try {
-            // 1. Parsăm JSON-ul primit în DTO-ul nostru
             DeviceMeasurementMessage message =
                     objectMapper.readValue(payload, DeviceMeasurementMessage.class);
 
