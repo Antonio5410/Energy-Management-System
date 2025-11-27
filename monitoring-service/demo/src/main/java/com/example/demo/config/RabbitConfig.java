@@ -36,7 +36,6 @@ public class RabbitConfig {
                 .with(DEVICE_DATA_ROUTING_KEY);
     }
 
-    // ⚠️ Asta e NOUL factory, pe care îl vom folosi explicit în @RabbitListener
     @Bean
     public SimpleRabbitListenerContainerFactory myRabbitListenerContainerFactory(
             ConnectionFactory connectionFactory
@@ -44,8 +43,8 @@ public class RabbitConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
 
-        // Primește payload-ul ca String, fără header-mapping fancy
-        factory.setMessageConverter(new SimpleMessageConverter());
+        // folosim converterul nostru care întoarce mereu String
+        factory.setMessageConverter(new RawJsonMessageConverter());
 
         return factory;
     }
