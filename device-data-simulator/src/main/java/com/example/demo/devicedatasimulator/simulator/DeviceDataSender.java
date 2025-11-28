@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Random;
 import java.util.UUID;
@@ -24,35 +26,36 @@ public class DeviceDataSender {
 
     private final UUID deviceId;
 
-    // Intervalul îl luăm din application.properties
-    private final long intervalMs;
-
-    public DeviceDataSender(RabbitTemplate rabbitTemplate,
-                            @Value("${simulator.device-id}") String deviceIdString,
-                            @Value("${simulator.interval-ms}") long intervalMs) {
+    public DeviceDataSender(
+            RabbitTemplate rabbitTemplate,
+            @Value("${simulator.device-id}") String deviceIdString
+    ) {
         this.rabbitTemplate = rabbitTemplate;
-        this.intervalMs = intervalMs;
         this.deviceId = UUID.fromString(deviceIdString);
         logger.info("DeviceDataSender initialized for device {}", this.deviceId);
     }
 
-    // trimitem mesaj la fiecare interval (default 10 sec)
+    // trimitem mesaj la fiecare 10 secunde (sau ce ai în simulator.interval-ms)
     @Scheduled(fixedRateString = "${simulator.interval-ms}")
     public void sendMeasurement() {
         String timestamp = Instant.now().toString();
 
-        // Valoare random între 0.05 și 0.40 kWh
+        // valoare random între 0.05 și 0.40
         double min = 0.05;
         double max = 0.40;
         double value = min + (max - min) * random.nextDouble();
 
-        String payload = String.format(
-                "{\"timestamp\":\"%s\",\"deviceId\":\"%s\",\"measurementValue\":%.4f}",
-                timestamp, deviceId, value
-        );
+        // BigDecimal NU depinde de locale: toPlainString are întotdeauna punct, nu virgulă
+        BigDecimal bd = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP);
+        String numericValue = bd.toPlainString(); // ex: "0.2345"
+
+        String payload = "{\"timestamp\":\"" + timestamp + "\"," +
+                "\"deviceId\":\"" + deviceId + "\"," +
+                "\"measurementValue\":" + numericValue +
+                "}";
+
+        logger.info("Sending payload: {}", payload);
 
         rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, payload);
-
-        logger.info("Sent measurement: {}", payload);
     }
 }
