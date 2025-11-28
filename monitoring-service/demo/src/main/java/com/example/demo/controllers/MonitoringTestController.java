@@ -1,24 +1,31 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.DailyConsumptionDto;
 import com.example.demo.entities.HourlyConsumption;
 import com.example.demo.repositories.HourlyConsumptionRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+import com.example.demo.services.MonitoringService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/monitoring")
 public class MonitoringTestController {
+
+    private final MonitoringService monitoringService;
 
     private final HourlyConsumptionRepository hourlyConsumptionRepository;
 
-    public MonitoringTestController(HourlyConsumptionRepository hourlyConsumptionRepository) {
+    public MonitoringTestController(MonitoringService monitoringService, HourlyConsumptionRepository hourlyConsumptionRepository) {
+        this.monitoringService = monitoringService;
         this.hourlyConsumptionRepository = hourlyConsumptionRepository;
     }
 
-    @GetMapping("/monitoring/test")
+    @GetMapping("/test")
     public List<HourlyConsumption> testDb() {
         // Inserăm un row de test, ca să fim siguri că putem SCRIE
         HourlyConsumption hc = new HourlyConsumption(
@@ -31,6 +38,16 @@ public class MonitoringTestController {
 
         // Returnăm toate înregistrările, ca să vedem că putem și CITI
         return hourlyConsumptionRepository.findAll();
+    }
+
+    // GET /monitoring/devices/{deviceId}/daily?date=2025-11-27
+    @GetMapping("/devices/{deviceId}/daily")
+    public List<DailyConsumptionDto> getDailyConsumption(
+            @PathVariable UUID deviceId,
+            @RequestParam("date")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return monitoringService.getDailyConsumption(deviceId, date);
     }
 }
 
