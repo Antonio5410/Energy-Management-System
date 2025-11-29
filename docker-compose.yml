@@ -104,6 +104,29 @@ services:
     deploy:
       replicas: 1
 
+  monitoring-service:
+    image: energy-management-deploy-example-monitoring-service:latest
+    build:
+      context: ./monitoring-service
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: root
+      DB_DBNAME: energy-monitoring-db
+      DB_IP: energy-monitoring-db
+      DB_PORT: 5432
+      PORT: 8080
+    depends_on:
+      - energy-monitoring-db
+      - rabbitmq-broker
+    networks:
+      - proxy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.monitoring.rule=PathPrefix(`/monitoring`)
+      - traefik.http.routers.monitoring.entrypoints=web
+      - traefik.http.services.monitoring.loadbalancer.server.port=8080
+
   nginx-frontend:
     build:
       context: ./frontend

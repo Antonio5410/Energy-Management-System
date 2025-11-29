@@ -1,14 +1,16 @@
-# ---- Stage 1: Build the JAR ----
-FROM maven:3.9.9-eclipse-temurin-23-alpine AS build
-WORKDIR /workspace
-COPY demo/pom.xml demo/pom.xml
-RUN mvn -q -f demo/pom.xml -DskipTests dependency:go-offline
-COPY demo/src demo/src
-RUN mvn -q -f demo/pom.xml -DskipTests package
+FROM eclipse-temurin:17-jdk-alpine
 
-# ---- Stage 2: Run the app ----
-FROM eclipse-temurin:23-jdk-alpine
 WORKDIR /app
-COPY --from=build /workspace/demo/target/*.jar app.jar
-EXPOSE 8081
+
+COPY demo/target/demo-0.0.1-SNAPSHOT.jar app.jar
+
+ENV PORT=8080
+ENV DB_IP=energy-monitoring-db
+ENV DB_PORT=5432
+ENV DB_DBNAME=energy-monitoring-db
+ENV DB_USER=postgres
+ENV DB_PASSWORD=root
+
+EXPOSE 8080
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
