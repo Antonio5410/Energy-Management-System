@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Random;
 import java.util.UUID;
 
@@ -39,6 +41,12 @@ public class DeviceDataSender {
     @Scheduled(fixedRateString = "${simulator.interval-ms}")
     public void sendMeasurement() {
         String timestamp = Instant.now().toString();
+//        OffsetDateTime timestamp = OffsetDateTime
+//                .now(ZoneOffset.UTC)
+//                .withSecond(0)
+//                .withNano(0);
+
+
 
         // valoare random între 0.05 și 0.40
         double min = 0.05;
