@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,7 +49,7 @@ public class DeviceMeasurementListener {
 
             // 3. Parse timestamp (ISO-8601, ex: 2025-11-26T15:40:00Z)
             OffsetDateTime odt = OffsetDateTime.parse(message.getTimestamp());
-            LocalDateTime localTimestamp = odt.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+            LocalDateTime localTimestamp = odt.atZoneSameInstant(ZoneId.of("Europe/Bucharest")).toLocalDateTime();
 
             // 4. Trunchiem la începutul orei
             LocalDateTime hourStart = localTimestamp

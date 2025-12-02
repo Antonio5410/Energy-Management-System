@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Random;
 import java.util.UUID;
@@ -40,11 +41,12 @@ public class DeviceDataSender {
     // trimitem mesaj la fiecare 10 secunde (sau ce ai în simulator.interval-ms)
     @Scheduled(fixedRateString = "${simulator.interval-ms}")
     public void sendMeasurement() {
-        String timestamp = Instant.now().toString();
-//        OffsetDateTime timestamp = OffsetDateTime
-//                .now(ZoneOffset.UTC)
-//                .withSecond(0)
-//                .withNano(0);
+//        String timestamp = Instant.now().toString();
+        OffsetDateTime timestamp = OffsetDateTime
+                .now(ZoneId.of("Europe/Bucharest"))
+                .withSecond(0)
+                .withNano(0);
+        System.out.println("Generated timestamp: " + timestamp);
 
 
 
