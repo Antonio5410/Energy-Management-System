@@ -66,8 +66,14 @@ services:
       DB_IP: energy-people-db
       DB_PORT: 5432
       PORT: 8080
+      
+      SPRING_RABBITMQ_HOST: rabbitmq      
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
     depends_on:
       - energy-people-db
+      - rabbitmq-broker 
     networks:
       - proxy-network
     labels:
@@ -91,8 +97,15 @@ services:
       DB_IP: energy-device-db
       DB_PORT: 5432
       PORT: 8080
+      
+
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
     depends_on:
       - energy-device-db
+      - rabbitmq-broker
     networks:
       - proxy-network
     labels:
@@ -116,6 +129,11 @@ services:
       DB_IP: energy-monitoring-db
       DB_PORT: 5432
       PORT: 8080
+
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
     depends_on:
       - energy-monitoring-db
       - rabbitmq-broker
@@ -143,6 +161,7 @@ services:
   rabbitmq-broker:
     image: rabbitmq:3-management
     container_name: rabbitmq-broker
+    hostname: rabbitmq
     ports:
       - "5672:5672"    # portul AMQP pentru aplicațiile mele
       - "15672:15672"  # interfața web de admin RabbitMQ

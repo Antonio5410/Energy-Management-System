@@ -4,6 +4,7 @@ package com.example.demo.services;
 import com.example.demo.dtos.DeviceDTO;
 import com.example.demo.dtos.PersonDTO;
 import com.example.demo.dtos.PersonDetailsDTO;
+import com.example.demo.dtos.SyncEventDTO;
 import com.example.demo.dtos.builders.PersonBuilder;
 import com.example.demo.entities.Person;
 import com.example.demo.handlers.exceptions.model.DuplicateResourceException;
@@ -13,12 +14,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,12 +29,21 @@ public class PersonService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersonService.class);
     private final PersonRepository personRepository;
     private final RestTemplate restTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${device.service.url}")
     private String deviceServiceUrl;
 
+    @Value("${sync.exchange}")        // ex: sync.exchange
+    private String syncExchange;
+
+    @Value("${sync.routing-key}")     // ex: sync.key
+    private String syncRoutingKey;
+
+
     @Autowired
-    public PersonService(PersonRepository personRepository, RestTemplate restTemplate) {
+    public PersonService(PersonRepository personRepository, RestTemplate restTemplate, RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
         this.restTemplate = restTemplate;
         this.personRepository = personRepository;
     }
@@ -54,9 +65,34 @@ public class PersonService {
     }
 
     public UUID insert(PersonDetailsDTO personDTO) {
+//        Person person = PersonBuilder.toEntity(personDTO);
+//        person = personRepository.save(person);
+//        LOGGER.debug("Person with id {} was inserted in db", person.getId());
+//        return person.getId();
+        // 1. salvăm user-ul în baza de date
         Person person = PersonBuilder.toEntity(personDTO);
         person = personRepository.save(person);
         LOGGER.debug("Person with id {} was inserted in db", person.getId());
+
+        // 2. construim evenimentul de sincronizare
+        SyncEventDTO event = new SyncEventDTO();
+        event.setEventType("USER_CREATED");
+        event.setUserId(person.getId());
+        event.setUsername(person.getUsername());
+        event.setTimestamp(Instant.now());
+
+        // 3. trimitem în RabbitMQ
+        try {
+            rabbitTemplate.convertAndSend(syncExchange, syncRoutingKey, event);
+            LOGGER.info("Sent USER_CREATED sync event for user {}", person.getId());
+        } catch (Exception e) {
+            // aici alegi filozofia:
+            // - dacă vrei să NU oprești crearea userului când pică RabbitMQ, doar loghezi:
+            LOGGER.warn("Failed to send USER_CREATED sync event for user {}: {}", person.getId(), e.getMessage());
+            // - dacă vrei să pici tot (user + sync) când RabbitMQ nu merge, arunci RuntimeException
+            // throw new RuntimeException("Failed to send sync event", e);
+        }
+
         return person.getId();
     }
 
@@ -116,12 +152,6 @@ public class PersonService {
             // dacă vrei să NU ștergi persoana când pică device-service, aici arunci RuntimeException
         }
     }
-
-
-
-
-
-
 
     public void delete(UUID id) {
         Person person = personRepository.findById(id)

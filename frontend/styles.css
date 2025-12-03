@@ -1,80 +1,80 @@
 body {
-      font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 5px;
-    }
-    .subtitle {
-      color: #555;
-      font-size: 13px;
-      margin-bottom: 20px;
-    }
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    fieldset {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 10px 15px 15px;
-      margin-bottom: 20px;
-    }
-    legend {
-      font-weight: bold;
-      padding: 0 5px;
-    }
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 8px;
-      align-items: center;
-    }
-    .form-row label {
-      min-width: 90px;
-      font-size: 13px;
-    }
-    .form-row input,
-    .form-row select {
-      flex: 1;
-      min-width: 120px;
-      padding: 4px 6px;
-      font-size: 13px;
-    }
-    .inline-group {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 15px;
-      border-radius: 5px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-size: 13px;
-    }
-    small {
-      color: #666;
-    }
-    .badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
-    .badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+h1 {
+    margin-bottom: 5px;
+}
+.subtitle {
+    color: #555;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+button {
+    background: #4CAF50;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+button:hover {
+    background: #45a049;
+}
+fieldset {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 15px 15px;
+    margin-bottom: 20px;
+}
+legend {
+    font-weight: bold;
+    padding: 0 5px;
+}
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+.form-row label {
+    min-width: 90px;
+    font-size: 13px;
+}
+.form-row input,
+.form-row select {
+    flex: 1;
+    min-width: 120px;
+    padding: 4px 6px;
+    font-size: 13px;
+}
+.inline-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+pre {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 13px;
+}
+small {
+    color: #666;
+}
+.badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
+.badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
