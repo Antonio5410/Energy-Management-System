@@ -67,7 +67,7 @@ services:
       DB_PORT: 5432
       PORT: 8080
       
-      SPRING_RABBITMQ_HOST: rabbitmq      
+      SPRING_RABBITMQ_HOST: rabbitmq-broker    
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin
@@ -99,7 +99,7 @@ services:
       PORT: 8080
       
 
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: rabbitmq-broker
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin
@@ -130,7 +130,7 @@ services:
       DB_PORT: 5432
       PORT: 8080
 
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: rabbitmq-broker
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin
@@ -161,7 +161,7 @@ services:
   rabbitmq-broker:
     image: rabbitmq:3-management
     container_name: rabbitmq-broker
-    hostname: rabbitmq
+    hostname: rabbitmq-broker
     ports:
       - "5672:5672"    # portul AMQP pentru aplicațiile mele
       - "15672:15672"  # interfața web de admin RabbitMQ
