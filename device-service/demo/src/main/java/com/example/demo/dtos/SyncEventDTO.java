@@ -1,13 +1,22 @@
 package com.example.demo.dtos;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
-public class SyncEventDTO {
+public class SyncEventDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private String eventType;      // ex: "USER_CREATED"
     private UUID userId;
     private String username;
     private Instant timestamp;
+
+    public SyncEventDTO() {
+    }
+
+    // getters & setters
 
     public String getEventType() {
         return eventType;
