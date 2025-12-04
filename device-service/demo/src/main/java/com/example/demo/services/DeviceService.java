@@ -3,6 +3,7 @@ package com.example.demo.services;
 
 import com.example.demo.dtos.DeviceDTO;
 import com.example.demo.dtos.DeviceDetailsDTO;
+import com.example.demo.dtos.SyncEventDTO;
 import com.example.demo.dtos.builders.DeviceBuilder;
 import com.example.demo.entities.Device;
 import com.example.demo.handlers.exceptions.model.DuplicateResourceException;
@@ -11,6 +12,7 @@ import com.example.demo.repositories.DeviceRepository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,13 +33,21 @@ public class DeviceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceService.class);
     private final DeviceRepository deviceRepository;
     private final RestTemplate restTemplate;
+    private final RabbitTemplate rabbitTemplate;
+
+    @Value("${sync.exchange}")
+    private String syncExchange;
+
+    @Value("${device.sync.routing-key}")
+    private String deviceSyncRoutingKey;
 
     @Value("${people.service.url}")
     private String peopleServiceUrl;
 
-    public DeviceService(DeviceRepository deviceRepository) {
+    public DeviceService(DeviceRepository deviceRepository, RabbitTemplate rabbitTemplate) {
         this.deviceRepository = deviceRepository;
         this.restTemplate = new RestTemplate();
+        this.rabbitTemplate = rabbitTemplate;
     }
 
 
@@ -112,6 +123,24 @@ public class DeviceService {
         Device device = DeviceBuilder.toEntity(deviceDTO);
         device = deviceRepository.save(device);
         LOGGER.debug("Device with id {} was inserted in db", device.getId());
+
+        SyncEventDTO event = new SyncEventDTO();
+        event.setEventType("DEVICE_CREATED");
+        event.setDeviceId(device.getId());
+        // adaptăm numele câmpului la entitatea ta (consum_maxim etc.)
+        event.setMaxHourlyConsumption(
+                device.getConsumMaxim() != null ? device.getConsumMaxim().doubleValue() : null
+        );
+        event.setTimestamp(Instant.now());
+
+        try {
+            rabbitTemplate.convertAndSend(syncExchange, deviceSyncRoutingKey, event);
+            LOGGER.info("Sent DEVICE_CREATED sync event for device {}", device.getId());
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send DEVICE_CREATED sync event for device {}: {}",
+                    device.getId(), e.getMessage());
+        }
+
         return device.getId();
     }
 

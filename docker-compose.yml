@@ -137,6 +137,9 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin
+
+      SPRING_AMQP_DESERIALIZATION_TRUST_PACKAGES: "com.example.demo.dtos"
+      SPRING_AMQP_DESERIALIZATION_TRUST_ALL: "true"
     depends_on:
       - energy-monitoring-db
       - rabbitmq-broker

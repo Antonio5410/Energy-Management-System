@@ -10,6 +10,7 @@ import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 @Configuration
 public class RabbitConfig {
 
@@ -43,9 +44,49 @@ public class RabbitConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
 
-        // folosim converterul nostru care întoarce mereu String
         factory.setMessageConverter(new RawJsonMessageConverter());
 
         return factory;
     }
+
+    /// pentru device sync cu device service
+
+    public static final String SYNC_EXCHANGE = "sync.exchange";
+    public static final String DEVICE_SYNC_QUEUE = "device-sync.queue";
+    public static final String DEVICE_SYNC_ROUTING_KEY = "device-sync.key";
+
+    @Bean
+    public DirectExchange syncExchange() {
+        return new DirectExchange(SYNC_EXCHANGE);
+    }
+
+    @Bean
+    public Queue deviceSyncQueue() {
+        // coadă separată pentru DEVICE_CREATED
+        return new Queue(DEVICE_SYNC_QUEUE, true);
+    }
+
+    @Bean
+    public Binding deviceSyncBinding(DirectExchange syncExchange, Queue deviceSyncQueue) {
+        return BindingBuilder
+                .bind(deviceSyncQueue)
+                .to(syncExchange)
+                .with(DEVICE_SYNC_ROUTING_KEY);
+    }
+    @Bean
+    public SimpleRabbitListenerContainerFactory deviceSyncListenerFactory(
+            ConnectionFactory connectionFactory
+    ) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+
+        SimpleMessageConverter converter = new SimpleMessageConverter();
+        converter.addAllowedListPatterns("com.example.demo.dtos.*");
+        converter.addAllowedListPatterns("java.util.*");
+        converter.addAllowedListPatterns("java.time.*");
+
+        factory.setMessageConverter(converter);
+        return factory;
+    }
+
 }

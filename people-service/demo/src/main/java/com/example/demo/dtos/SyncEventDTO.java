@@ -8,15 +8,17 @@ public class SyncEventDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String eventType;      // ex: "USER_CREATED"
+    private String eventType;      // "USER_CREATED" / "DEVICE_CREATED"
     private UUID userId;
     private String username;
     private Instant timestamp;
 
+    private UUID deviceId;
+    private Double maxHourlyConsumption;
+
     public SyncEventDTO() {
     }
 
-    // getters & setters
 
     public String getEventType() {
         return eventType;
@@ -48,5 +50,21 @@ public class SyncEventDTO implements Serializable {
 
     public void setTimestamp(Instant timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public UUID getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(UUID deviceId) {
+        this.deviceId = deviceId;
+    }
+
+    public Double getMaxHourlyConsumption() {
+        return maxHourlyConsumption;
+    }
+
+    public void setMaxHourlyConsumption(Double maxHourlyConsumption) {
+        this.maxHourlyConsumption = maxHourlyConsumption;
     }
 }
