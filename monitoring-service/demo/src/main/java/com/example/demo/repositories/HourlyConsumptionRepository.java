@@ -17,4 +17,9 @@ public interface HourlyConsumptionRepository extends JpaRepository<HourlyConsump
             LocalDateTime start,
             LocalDateTime end
     );
+    List<HourlyConsumption> findByDeviceIdAndHourStartBetweenOrderByHourStartAsc(
+            UUID deviceId,
+            LocalDateTime from,
+            LocalDateTime to
+    );
 }
