@@ -78,3 +78,49 @@ small {
 }
 .badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
 .badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
+
+
+/* NAVBAR COMUN */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: #111827;
+  color: #f9fafb;
+  margin-bottom: 1rem;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link {
+  color: #e5e7eb;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.nav-link:hover {
+  background: #374151;
+  color: #fff;
+}
+
+.nav-link.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* Ca să nu stea textul lipit de navbar */
+.page-content {
+  padding: 0 1.5rem 2rem;
+}

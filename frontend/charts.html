@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Energy Monitoring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Stiluri doar pentru pagina asta -->
+    <link rel="stylesheet" href="charts.css">
+
+    <!-- Chart.js din CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header class="top-bar">
+    <div class="brand">Energy Management</div>
+    <nav class="top-nav">
+        <a href="/">Admin</a>
+        <a href="/charts.html" class="active">Monitoring</a>
+    </nav>
+</header>
+
+<main class="page">
+    <section class="panel">
+        <h1>Consumption Monitoring</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="deviceSelect">Device</label>
+                <select id="deviceSelect">
+                    <option value="">Select a device...</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="dateInput">Day</label>
+                <input type="date" id="dateInput">
+            </div>
+
+            <div class="control-group button-group">
+                <button id="loadDataBtn">Load consumption</button>
+            </div>
+        </div>
+
+        <p id="statusMessage" class="status"></p>
+
+        <div class="chart-container">
+            <canvas id="consumptionChart"></canvas>
+        </div>
+    </section>
+</main>
+
+<script src="charts.js"></script>
+</body>
+</html>

@@ -1,6 +1,14 @@
 FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
-COPY index.html /usr/share/nginx/html/index.html
-COPY script.js /usr/share/nginx/html/script.js
-COPY styles.css /usr/share/nginx/html/styles.css
+
+# dashboard-ul vechi
+COPY index.html      /usr/share/nginx/html/index.html
+COPY script.js       /usr/share/nginx/html/script.js
+COPY styles.css      /usr/share/nginx/html/styles.css
+
+# pagina nouă de monitoring
+COPY charts.html     /usr/share/nginx/html/charts.html
+COPY charts.js   /usr/share/nginx/html/charts.js
+COPY charts.css  /usr/share/nginx/html/charts.css
+
 EXPOSE 80
