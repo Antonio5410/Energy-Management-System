@@ -1,166 +1,256 @@
-let chartInstance = null;
+// Same-origin: charts.html e servit prin Traefik de pe http://localhost
+const BASE_URL = ""; // apelurile merg la /people, /devices, /monitoring pe același host
 
-document.addEventListener("DOMContentLoaded", () => {
-    const deviceSelect = document.getElementById("deviceSelect");
-    const dateInput = document.getElementById("dateInput");
-    const loadButton = document.getElementById("loadDataBtn");
-    const statusMessage = document.getElementById("statusMessage");
+// Basic Auth: antonio/parola123
+const AUTH_HEADER = "Basic " + btoa("antonio:parola123");
 
-    // 1. Populate device select on load
-    loadDevices();
+function authHeaders(extra = {}) {
+  return {
+    Authorization: AUTH_HEADER,
+    ...extra,
+  };
+}
 
-    // 2. Optionally, set today's date as default
-    const today = new Date().toISOString().slice(0, 10);
-    dateInput.value = today;
+async function fetchJson(url, options = {}) {
+  const response = await fetch(BASE_URL + url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...authHeaders(),
+    },
+  });
 
-    // 3. Load data when user clicks button
-    loadButton.addEventListener("click", () => {
-        const deviceId = deviceSelect.value;
-        const day = dateInput.value;
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+  }
 
-        if (!deviceId) {
-            setStatus("Please select a device.", true);
-            return;
-        }
-        if (!day) {
-            setStatus("Please select a day.", true);
-            return;
-        }
+  return response.json();
+}
 
-        loadConsumptionForDay(deviceId, day);
+// Elemente din DOM
+const userSelect = document.getElementById("userSelect");
+const deviceSelect = document.getElementById("deviceSelect");
+const dayInput = document.getElementById("dayInput");
+const statusMessage = document.getElementById("statusMessage");
+const monitoringForm = document.getElementById("monitoringForm");
+const loadDataBtn = document.getElementById("loadDataBtn");
+
+// Chart instance (o păstrăm ca să o putem distruge înainte de a crea alta)
+let consumptionChart = null;
+
+function setStatus(message, type = "info") {
+  statusMessage.textContent = message || "";
+  statusMessage.className = "status"; // resetăm
+  if (type === "error") {
+    statusMessage.classList.add("error");
+  } else if (type === "ok") {
+    statusMessage.classList.add("ok");
+  }
+}
+
+// 1) Load USERS în dropdown
+async function loadUsers() {
+  try {
+    setStatus("Loading users...");
+    const users = await fetchJson("/people");
+
+    userSelect.innerHTML = `<option value="">Select a user.</option>`;
+    users.forEach((u) => {
+      const opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = `${u.name} (${u.username})`;
+      userSelect.appendChild(opt);
     });
 
-    function setStatus(message, isError = false) {
-        statusMessage.textContent = message || "";
-        statusMessage.classList.toggle("error", !!isError);
-        statusMessage.classList.toggle("ok", !isError && !!message);
+    setStatus(`Loaded ${users.length} users.`, "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("Error loading users: " + err.message, "error");
+  }
+}
+
+// 2) Când se schimbă user-ul, încărcăm device-urile lui
+async function loadDevicesForUser(userId) {
+  deviceSelect.innerHTML = `<option value="">Select a device.</option>`;
+  deviceSelect.disabled = true;
+
+  if (!userId) {
+    setStatus("Please select a user.", "info");
+    return;
+  }
+
+  try {
+    setStatus("Loading devices for selected user...");
+    // Endpoint-ul deja folosit în index: /devices/owner/{personId}
+    const devices = await fetchJson(
+      `/devices/owner/${encodeURIComponent(userId)}`
+    );
+
+    if (!Array.isArray(devices) || devices.length === 0) {
+      setStatus("No devices found for this user.", "info");
+      return;
     }
 
-    function loadDevices() {
-        setStatus("Loading devices...");
+    devices.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = d.name || d.id;
+      deviceSelect.appendChild(opt);
+    });
 
-        fetch("/monitoring/devices")
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Failed to load devices");
-                }
-                return response.json();
-            })
-            .then(devices => {
-                // Clear existing options, keep the placeholder
-                deviceSelect.innerHTML = '<option value="">Select a device...</option>';
+    deviceSelect.disabled = false;
+    setStatus(`Loaded ${devices.length} devices for selected user.`, "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("Error loading devices: " + err.message, "error");
+  }
+}
 
-                devices.forEach(d => {
-                    const opt = document.createElement("option");
-                    opt.value = d.id;
-                    opt.textContent = `${d.id} (max ${d.maxHourlyConsumption} kWh)`;
-                    deviceSelect.appendChild(opt);
-                });
+// 3) Load consum pentru device + day și desenează chart-ul
+async function loadConsumptionForDeviceAndDay(event) {
+  if (event) {
+    event.preventDefault();
+  }
 
-                if (devices.length === 0) {
-                    setStatus("No monitored devices found.", true);
-                } else {
-                    setStatus(`Loaded ${devices.length} devices.`);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                setStatus("Error loading devices.", true);
-            });
+  const deviceId = deviceSelect.value;
+  const selectedDay = dayInput.value; // format: YYYY-MM-DD
+
+  if (!userSelect.value) {
+    setStatus("Please select a user first.", "error");
+    return;
+  }
+
+  if (!deviceId) {
+    setStatus("Please select a device.", "error");
+    return;
+  }
+
+  if (!selectedDay) {
+    setStatus("Please choose a day.", "error");
+    return;
+  }
+
+  // Pentru o singură zi, putem trimite from=day & to=day
+  const from = selectedDay;
+  const to = selectedDay;
+
+  try {
+    setStatus("Loading consumption data...");
+
+    const data = await fetchJson(
+      `/monitoring/devices/${encodeURIComponent(
+        deviceId
+      )}/consumption?from=${from}&to=${to}`
+    );
+
+    if (!Array.isArray(data) || data.length === 0) {
+      setStatus("No consumption data for this day.", "info");
+      if (consumptionChart) {
+        consumptionChart.destroy();
+        consumptionChart = null;
+      }
+      return;
     }
 
-    function loadConsumptionForDay(deviceId, day) {
-        setStatus("Loading consumption data...");
+    // Ne asigurăm că sunt doar în ziua selectată (în caz că backend-ul întoarce interval mai larg)
+    const filtered = data.filter((item) =>
+      item.hourStart.startsWith(selectedDay)
+    );
 
-        // Cerem interval [day, day] – un singur day
-        const url = `/monitoring/devices/${encodeURIComponent(deviceId)}` +
-                    `/consumption?from=${day}&to=${day}`;
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Failed to load consumption data");
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!Array.isArray(data) || data.length === 0) {
-                    setStatus("No consumption data for this device and day.", true);
-                    updateChart([], []);
-                    return;
-                }
-
-                // Transformăm în „hour” + „energy”
-                const labels = [];
-                const values = [];
-
-                data.forEach(entry => {
-                    // hourStart: "2025-12-02T09:00:00"
-                    const hourStr = entry.hourStart;
-                    let hourLabel = hourStr;
-
-                    try {
-                        const date = new Date(hourStr);
-                        const hour = date.getHours().toString().padStart(2, "0");
-                        hourLabel = `${hour}:00`;
-                    } catch (e) {
-                        // dacă parse nu merge, folosim direct stringul
-                    }
-
-                    labels.push(hourLabel);
-                    values.push(entry.energyKwh);
-                });
-
-                setStatus(`Loaded ${data.length} hourly values.`);
-                updateChart(labels, values);
-            })
-            .catch(err => {
-                console.error(err);
-                setStatus("Error loading consumption data.", true);
-                updateChart([], []);
-            });
+    if (filtered.length === 0) {
+      setStatus("No consumption data for this day.", "info");
+      if (consumptionChart) {
+        consumptionChart.destroy();
+        consumptionChart = null;
+      }
+      return;
     }
 
-    function updateChart(labels, values) {
-        const ctx = document.getElementById("consumptionChart").getContext("2d");
+    // Sortăm după oră
+    filtered.sort((a, b) => a.hourStart.localeCompare(b.hourStart));
 
-        if (chartInstance) {
-            chartInstance.data.labels = labels;
-            chartInstance.data.datasets[0].data = values;
-            chartInstance.update();
-            return;
-        }
+    const labels = filtered.map((item) => {
+      // item.hourStart e de forma "YYYY-MM-DDTHH:MM:SS"
+      const parts = item.hourStart.split("T");
+      if (parts.length < 2) return item.hourStart;
+      return parts[1].slice(0, 5); // HH:MM
+    });
 
-        chartInstance = new Chart(ctx, {
-            type: "bar",  // poți schimba în "line" dacă vrei
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: "Energy (kWh)",
-                    data: values,
-                    backgroundColor: "rgba(25, 118, 210, 0.4)",
-                    borderColor: "rgba(25, 118, 210, 1)",
-                    borderWidth: 1
-                }]
+    const values = filtered.map((item) => item.energyKwh);
+
+    // Ștergem chart-ul vechi, dacă există
+    if (consumptionChart) {
+      consumptionChart.destroy();
+    }
+
+    const ctx = document.getElementById("consumptionChart").getContext("2d");
+    consumptionChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Energy (kWh)",
+            data: values,
+            borderWidth: 2,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Hour",
             },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: "Hour of day"
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Energy [kWh]"
-                        }
-                    }
-                }
-            }
-        });
-    }
+          },
+          y: {
+            title: {
+              display: true,
+              text: "Energy (kWh)",
+            },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+
+    setStatus(
+      `Loaded ${filtered.length} hourly values for ${selectedDay}.`,
+      "ok"
+    );
+  } catch (err) {
+    console.error(err);
+    setStatus("Error loading consumption data: " + err.message, "error");
+  }
+}
+
+// INITIALIZARE
+document.addEventListener("DOMContentLoaded", () => {
+  // setăm ziua de azi by default
+  const today = new Date().toISOString().slice(0, 10);
+  if (dayInput) {
+    dayInput.value = today;
+  }
+
+  // încărcăm userii
+  if (userSelect) {
+    loadUsers();
+    userSelect.addEventListener("change", (e) => {
+      loadDevicesForUser(e.target.value);
+    });
+  }
+
+  // submit pe formular → încarcă consumul
+  if (monitoringForm) {
+    monitoringForm.addEventListener("submit", loadConsumptionForDeviceAndDay);
+  }
+
+  // și click direct pe buton, ca backup
+  if (loadDataBtn) {
+    loadDataBtn.addEventListener("click", loadConsumptionForDeviceAndDay);
+  }
 });

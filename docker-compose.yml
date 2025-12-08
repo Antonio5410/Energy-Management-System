@@ -30,6 +30,8 @@ services:
       POSTGRES_DB: energy-people-db
     networks:
       - proxy-network
+    volumes:
+      - people-data:/var/lib/postgresql/data
 
   energy-device-db:
     image: postgres:15
@@ -39,6 +41,8 @@ services:
       POSTGRES_DB: energy-device-db
     networks:
       - proxy-network
+    volumes:
+      - device-data:/var/lib/postgresql/data
 
   energy-monitoring-db:
     image: postgres:15
@@ -186,4 +190,6 @@ networks:
 
 volumes:
   traefik_logs:
+  people-data:
+  device-data:
   monitoring_db_data:

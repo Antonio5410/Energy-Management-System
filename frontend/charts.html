@@ -1,56 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Energy Monitoring</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- UN SINGUR CSS comun -->
-    <link rel="stylesheet" href="styles.css">
-
-    <!-- Chart.js din CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <title>Energy Management - Monitoring</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-<header class="top-bar">
+  <!-- NAVBAR COMUN -->
+  <header class="top-bar">
     <div class="brand">Energy Management</div>
     <nav class="top-nav">
-        <a href="/index.html">Admin</a>
-        <a href="/charts.html" class="active">Monitoring</a>
+      <a href="/index.html">Admin</a>
+      <a href="/charts.html" class="active">Monitoring</a>
     </nav>
-</header>
+  </header>
 
-<main class="page">
-    <section class="panel">
-        <h1>Consumption Monitoring</h1>
+  <main class="page-container">
+    <h1 class="page-title">Consumption Monitoring</h1>
 
-        <div class="controls">
-            <div class="control-group">
-                <label for="deviceSelect">Device</label>
-                <select id="deviceSelect">
-                    <option value="">Select a device...</option>
-                </select>
-            </div>
+    <!-- FORM CONTROLS -->
+    <form id="monitoringForm" class="monitoring-controls">
+      <div class="monitoring-field">
+        <label for="userSelect">User</label>
+        <select id="userSelect"></select>
+      </div>
 
-            <div class="control-group">
-                <label for="dateInput">Day</label>
-                <input type="date" id="dateInput">
-            </div>
+      <div class="monitoring-field">
+        <label for="deviceSelect">Device</label>
+        <select id="deviceSelect"></select>
+      </div>
 
-            <div class="button-group">
-                <button id="loadDataBtn">Load consumption</button>
-            </div>
-        </div>
+      <div class="monitoring-field">
+        <label for="dayInput">Day</label>
+        <input type="date" id="dayInput" />
+      </div>
 
-        <p id="statusMessage" class="status"></p>
+      <div class="button-group">
+        <button type="submit" id="loadDataBtn" class="primary-btn">
+          Load consumption
+        </button>
+      </div>
+    </form>
 
-        <div class="chart-container">
-            <canvas id="consumptionChart"></canvas>
-        </div>
+    <div id="statusMessage" class="status"></div>
+
+    <!-- CHART SECTION -->
+    <section class="chart-section">
+      <h2 class="section-title">Energy consumption (kWh)</h2>
+      <div class="chart-container">
+        <canvas id="consumptionChart"></canvas>
+      </div>
     </section>
-</main>
+  </main>
 
-<script src="charts.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Logica pentru pagina de charts -->
+  <script src="charts.js"></script>
 </body>
 </html>
