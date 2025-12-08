@@ -1,126 +1,213 @@
+/* ======================= */
+/*        BASE STYLE       */
+/* ======================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 20px;
+    background: #f3f6fa;
+    color: #1e1e1e;
+    padding-bottom: 40px;
 }
+
+/* ======================= */
+/*        NAVBAR           */
+/* ======================= */
+
+.top-bar {
+    background: #ffffff;
+    border-bottom: 2px solid #dfe6ee;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2a5bd7;
+}
+
+.top-nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    color: #444;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: 0.2s ease;
+}
+
+.top-nav a:hover {
+    background: #e6eefc;
+}
+
+.top-nav a.active {
+    background: #2a5bd7;
+    color: white;
+}
+
+/* ======================= */
+/*        PAGE LAYOUT      */
+/* ======================= */
+
 h1 {
-    margin-bottom: 5px;
+    margin: 25px auto 10px auto;
+    text-align: center;
+    font-size: 28px;
 }
+
 .subtitle {
-    color: #555;
-    font-size: 13px;
+    text-align: center;
     margin-bottom: 20px;
+    color: #555;
 }
+
+/* ======================= */
+/*        BUTTONS          */
+/* ======================= */
+
 .buttons {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
 }
+
 button {
-    background: #4CAF50;
+    background: #2a5bd7;
     color: white;
-    padding: 8px 14px;
+    padding: 10px 16px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s ease;
 }
+
 button:hover {
-    background: #45a049;
+    background: #1e49ad;
 }
+
+.badge-get {
+    background: #4caf50;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: white;
+    margin-right: 6px;
+}
+
+.badge-post {
+    background: #ff9800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: white;
+    margin-right: 6px;
+}
+
+/* ======================= */
+/*         FORMS           */
+/* ======================= */
+
 fieldset {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px 15px 15px;
-    margin-bottom: 20px;
+    background: white;
+    max-width: 700px;
+    margin: 25px auto;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #d1d9e6;
 }
+
 legend {
+    padding: 0 10px;
     font-weight: bold;
-    padding: 0 5px;
+    color: #2a5bd7;
 }
+
 .form-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 8px;
-    align-items: center;
+    flex-direction: column;
+    margin-bottom: 12px;
 }
-.form-row label {
-    min-width: 90px;
-    font-size: 13px;
+
+label {
+    font-weight: 600;
+    margin-bottom: 5px;
 }
-.form-row input,
-.form-row select {
-    flex: 1;
-    min-width: 120px;
-    padding: 4px 6px;
-    font-size: 13px;
+
+input, select {
+    padding: 10px;
+    border: 1px solid #bfc8d6;
+    border-radius: 6px;
 }
-.inline-group {
+
+input:focus, select:focus {
+    border-color: #2a5bd7;
+    outline: none;
+}
+
+/* ======================= */
+/*       CHART PAGE        */
+/* ======================= */
+
+.page {
+    max-width: 950px;
+    margin: auto;
+}
+
+.panel {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+    border: 1px solid #d9e2ef;
+}
+
+.controls {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 10px;
+    gap: 25px;
+    margin-bottom: 20px;
 }
-pre {
-    background: #f4f4f4;
+
+.control-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.button-group {
+    display: flex;
+    align-items: end;
+}
+
+.status {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.chart-container {
+    margin-top: 25px;
+}
+
+/* ======================= */
+/*      RESULT BOX         */
+/* ======================= */
+
+pre#result {
+    max-width: 700px;
+    margin: 20px auto;
+    background: #ffffff;
+    border: 1px solid #ccd6e4;
     padding: 15px;
-    border-radius: 5px;
-    overflow-x: auto;
+    border-radius: 10px;
     white-space: pre-wrap;
-    word-wrap: break-word;
-    font-size: 13px;
-}
-small {
-    color: #666;
-}
-.badge-get { background:#1976d2; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
-.badge-post { background:#9c27b0; color:#fff; padding:2px 6px; border-radius:4px; font-size:10px; }
-
-
-/* NAVBAR COMUN */
-
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: #111827;
-  color: #f9fafb;
-  margin-bottom: 1rem;
-}
-
-.navbar-brand {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.navbar-links {
-  display: flex;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: #e5e7eb;
-  text-decoration: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-}
-
-.nav-link:hover {
-  background: #374151;
-  color: #fff;
-}
-
-.nav-link.active {
-  background: #3b82f6;
-  color: #fff;
-}
-
-/* Ca să nu stea textul lipit de navbar */
-.page-content {
-  padding: 0 1.5rem 2rem;
 }

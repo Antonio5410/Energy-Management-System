@@ -4,18 +4,19 @@
   <meta charset="UTF-8">
   <title>Energy Management Dashboard</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- <link rel="stylesheet" href="charts.css"> -->
   
 </head>
 <body>
 
   <!-- NAVBAR COMUN -->
-  <nav class="navbar">
-    <div class="navbar-brand">Energy Management</div>
-    <div class="navbar-links">
-      <a href="index.html" class="nav-link active">Admin</a>
-      <a href="charts.html" class="nav-link">Monitoring</a>
-    </div>
-  </nav>
+  <header class="top-bar">
+    <div class="brand">Energy Management</div>
+    <nav class="top-nav">
+        <a href="/index.html">Admin</a>
+        <a href="/charts.html" class="active">Monitoring</a>
+    </nav>
+  </header>
 
   <h1>Energy Management Dashboard</h1>
   <p class="subtitle">
@@ -203,8 +204,10 @@
     <small>Ia un ID din răspunsul de la <strong>Get All Persons</strong> și pune-l aici.</small>
   </fieldset>
 
-  <p>Backend response:</p>
-  <pre id="result">Click a button or submit a form...</pre>
+  <fieldset>
+    <legend>Backend response:</legend>
+    <pre id="result">Click a button or submit a form...</pre>
+  </fieldset>
 
   <script src="script.js"></script>
 </body>

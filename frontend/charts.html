@@ -5,17 +5,18 @@
     <title>Energy Monitoring</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Stiluri doar pentru pagina asta -->
-    <link rel="stylesheet" href="charts.css">
+    <!-- UN SINGUR CSS comun -->
+    <link rel="stylesheet" href="styles.css">
 
     <!-- Chart.js din CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 <header class="top-bar">
     <div class="brand">Energy Management</div>
     <nav class="top-nav">
-        <a href="/">Admin</a>
+        <a href="/index.html">Admin</a>
         <a href="/charts.html" class="active">Monitoring</a>
     </nav>
 </header>
@@ -37,7 +38,7 @@
                 <input type="date" id="dateInput">
             </div>
 
-            <div class="control-group button-group">
+            <div class="button-group">
                 <button id="loadDataBtn">Load consumption</button>
             </div>
         </div>
