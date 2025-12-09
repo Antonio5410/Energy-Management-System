@@ -9,10 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Random;
 import java.util.UUID;
 
@@ -38,7 +36,6 @@ public class DeviceDataSender {
         logger.info("DeviceDataSender initialized for device {}", this.deviceId);
     }
 
-    // trimitem mesaj la fiecare 10 secunde (sau ce ai în simulator.interval-ms)
     @Scheduled(fixedRateString = "${simulator.interval-ms}")
     public void sendMeasurement() {
 //        String timestamp = Instant.now().toString();
@@ -48,14 +45,10 @@ public class DeviceDataSender {
                 .withNano(0);
         System.out.println("Generated timestamp: " + timestamp);
 
-
-
-        // valoare random între 0.05 și 0.40
         double min = 0.05;
         double max = 0.40;
         double value = min + (max - min) * random.nextDouble();
 
-        // BigDecimal NU depinde de locale: toPlainString are întotdeauna punct, nu virgulă
         BigDecimal bd = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP);
         String numericValue = bd.toPlainString(); // ex: "0.2345"
 

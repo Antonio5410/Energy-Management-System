@@ -15,7 +15,7 @@ import java.util.UUID;
 
 public class DeviceDataSimulator {
 
-    // Numele exchange-ului și routing key-ul sunt aceleași ca în monitoring-service
+    // Numele exchange-ului și routing key-ul sunt aceleasi ca în monitoring-service
     private static final String EXCHANGE_NAME = "device-data-exchange";
     private static final String ROUTING_KEY = "device.data";
 
@@ -25,21 +25,21 @@ public class DeviceDataSimulator {
     private static final String RABBIT_USER = "admin";
     private static final String RABBIT_PASSWORD = "admin";
 
-    // Cât de des trimitem date (în secunde)
-    // Pentru demo: 10 secunde. Pentru cerință finală poți pune 600 (10 minute).
+    // Cat de des trimitem date (in secunde)
+    // Pentru demo: 10 secunde. Pentru cerința finala pot pune 600 (10 minute).
     private static final long SEND_INTERVAL_SECONDS = 10;
 
-    // Consum maxim aproximativ pe „măsurare”
+    // Consum maxim aproximativ pe „masurare”
     private static final double MIN_VALUE_KWH = 0.05;
     private static final double MAX_VALUE_KWH = 0.40;
 
     public static void main(String[] args) throws Exception {
-        // Poți trece deviceId ca argument la rulare, altfel folosim unul hardcodat
+        // Pot trece deviceId ca argument la rulare, altfel folosim unul hardcodat
         String deviceId = args.length > 0
                 ? args[0]
-                : "4019ad8f-b900-487a-9978-11c32bd67187"; // schimbă cu un device real din DB dacă vrei
+                : "4019ad8f-b900-487a-9978-11c32bd67187";
 
-        UUID.fromString(deviceId); // validare basic: aruncă excepție dacă nu e UUID
+        UUID.fromString(deviceId); // validare basic: arunca exceptie daca nu e UUID
 
         System.out.println("Starting Device Data Simulator for device " + deviceId);
         System.out.println("Connecting to RabbitMQ at " + RABBIT_HOST + ":" + RABBIT_PORT);
@@ -53,19 +53,16 @@ public class DeviceDataSimulator {
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
 
-            // Declaram exchange-ul pentru siguranță (direct, durabil)
+            // Declaram exchange-ul pentru siguranta (direct, durabil)
             channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.DIRECT, true);
 
             Random random = new Random();
 
             while (true) {
-                // 1. Timestamp în format ISO-8601 (compatibil cu OffsetDateTime.parse)
                 String timestamp = Instant.now().toString();
 
-                // 2. Valoare random între MIN și MAX
                 double value = MIN_VALUE_KWH + (MAX_VALUE_KWH - MIN_VALUE_KWH) * random.nextDouble();
 
-                // 3. JSON-ul trimis (identic cu ce așteaptă monitoring-service)
                 DecimalFormatSymbols symbols = new DecimalFormatSymbols();
                 symbols.setDecimalSeparator('.');
 
@@ -77,8 +74,6 @@ public class DeviceDataSimulator {
                                 "\"measurementValue\":" + numericValue +
                                 "}";
 
-
-                // 4. Publicăm mesajul în RabbitMQ
                 channel.basicPublish(
                         EXCHANGE_NAME,
                         ROUTING_KEY,
@@ -88,7 +83,6 @@ public class DeviceDataSimulator {
 
                 System.out.println("Sent message: " + payload);
 
-                // 5. Pauză între mesaje
                 Thread.sleep(SEND_INTERVAL_SECONDS * 1000);
             }
         }

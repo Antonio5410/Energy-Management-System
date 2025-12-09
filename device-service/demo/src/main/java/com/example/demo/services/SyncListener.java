@@ -21,7 +21,6 @@ public class SyncListener {
 
     @RabbitListener(queues = "sync.queue")
     public void handleSyncEvent(SyncEventDTO event) {
-        // dacă în viitor mai ai și alte tipuri de evenimente, le poți filtra aici
         if (!"USER_CREATED".equals(event.getEventType())) {
             LOGGER.info("Ignoring event of type {}", event.getEventType());
             return;

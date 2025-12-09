@@ -21,7 +21,7 @@ public class RabbitConfig {
 
     @Bean
     public Queue syncQueue() {
-        // durable = true (să rămână la restart)
+        // durable = true (sa ramana la restart)
         return new Queue(SYNC_QUEUE, true);
     }
 

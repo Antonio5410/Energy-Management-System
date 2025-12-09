@@ -33,10 +33,10 @@ public class PersonService {
     @Value("${device.service.url}")
     private String deviceServiceUrl;
 
-    @Value("${sync.exchange}")        // ex: sync.exchange
+    @Value("${sync.exchange}")
     private String syncExchange;
 
-    @Value("${sync.routing-key}")     // ex: sync.key
+    @Value("${sync.routing-key}")
     private String syncRoutingKey;
 
 
@@ -64,11 +64,7 @@ public class PersonService {
     }
 
     public UUID insert(PersonDetailsDTO personDTO) {
-//        Person person = PersonBuilder.toEntity(personDTO);
-//        person = personRepository.save(person);
-//        LOGGER.debug("Person with id {} was inserted in db", person.getId());
-//        return person.getId();
-        // 1. salvăm user-ul în baza de date
+        // 1. salvam user-ul in baza de date
         Person person = PersonBuilder.toEntity(personDTO);
         person = personRepository.save(person);
         LOGGER.debug("Person with id {} was inserted in db", person.getId());
@@ -85,11 +81,7 @@ public class PersonService {
             rabbitTemplate.convertAndSend(syncExchange, syncRoutingKey, event);
             LOGGER.info("Sent USER_CREATED sync event for user {}", person.getId());
         } catch (Exception e) {
-            // aici alegi filozofia:
-            // - dacă vrei să NU oprești crearea userului când pică RabbitMQ, doar loghezi:
             LOGGER.warn("Failed to send USER_CREATED sync event for user {}: {}", person.getId(), e.getMessage());
-            // - dacă vrei să pici tot (user + sync) când RabbitMQ nu merge, arunci RuntimeException
-            // throw new RuntimeException("Failed to send sync event", e);
         }
 
         return person.getId();
@@ -147,8 +139,6 @@ public class PersonService {
 
         } catch (RestClientException e) {
             System.out.println("Cascade delete FAILED for person " + personId + ": " + e.getMessage());
-            // la proiectul tău eu aș lăsa doar logul și *aș continua* ștergerea persoanei
-            // dacă vrei să NU ștergi persoana când pică device-service, aici arunci RuntimeException
         }
     }
 
@@ -161,6 +151,5 @@ public class PersonService {
         personRepository.delete(person);
         LOGGER.debug("Person with id {} was deleted from db", id);
     }
-
 
 }

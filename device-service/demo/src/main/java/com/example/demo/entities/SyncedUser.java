@@ -11,10 +11,7 @@ public class SyncedUser {
 
     @Id
     private UUID id;
-
     private String username;
-
-    // ===== getters & setters =====
 
     public UUID getId() {
         return id;

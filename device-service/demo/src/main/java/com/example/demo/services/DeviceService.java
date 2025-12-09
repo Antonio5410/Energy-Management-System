@@ -94,12 +94,6 @@ public class DeviceService {
     }
 
     public List<DeviceDTO> findDevicesByOwner(UUID ownerId) {
-//        if (!userExists(ownerId)) {
-//            throw new ResourceNotFoundException(
-//                    "The userId = " + ownerId.toString() + " was not found."
-//            );
-//        }
-
         List<Device> devices = deviceRepository.findByOwnerId(ownerId);
 
         return devices.stream()
@@ -127,7 +121,6 @@ public class DeviceService {
         SyncEventDTO event = new SyncEventDTO();
         event.setEventType("DEVICE_CREATED");
         event.setDeviceId(device.getId());
-        // adaptăm numele câmpului la entitatea ta (consum_maxim etc.)
         event.setMaxHourlyConsumption(
                 device.getConsumMaxim() != null ? device.getConsumMaxim().doubleValue() : null
         );

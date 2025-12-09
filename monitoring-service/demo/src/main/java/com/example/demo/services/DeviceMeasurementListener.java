@@ -47,7 +47,7 @@ public class DeviceMeasurementListener {
             // 2. Parse deviceId
             UUID deviceId = UUID.fromString(message.getDeviceId());
 
-            // 3. Parse timestamp (ISO-8601, ex: 2025-11-26T15:40:00Z)
+            // 3. Parse timestamp (ex: 2025-11-26T15:40:00Z)
             OffsetDateTime odt = OffsetDateTime.parse(message.getTimestamp());
             LocalDateTime localTimestamp = odt.atZoneSameInstant(ZoneId.of("Europe/Bucharest")).toLocalDateTime();
 
