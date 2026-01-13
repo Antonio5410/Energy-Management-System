@@ -1,0 +1,225 @@
+<script src="auth.js"></script>
+<script>
+  if (!requireAuth()) {}
+  if (getRole() !== "ADMIN") {
+    window.location.href = "/charts.html";
+  }
+</script>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Energy Management Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- <link rel="stylesheet" href="charts.css"> -->
+  
+</head>
+<body>
+
+  <!-- NAVBAR COMUN -->
+  <header class="top-bar">
+    <div class="brand">Energy Management</div>
+    <nav class="top-nav">
+        <a href="/index.html" class="active">Admin</a>
+        <a href="/charts.html">Monitoring</a>
+        <a href="/login.html" onclick="logout()">Logout</a>
+    </nav>
+  </header>
+
+  <h1>Energy Management Dashboard</h1>
+  <p class="subtitle">
+    Comunică cu <strong>people-service</strong> și <strong>device-service</strong> prin Traefik.<br>
+    <small>Basic Auth: <code>antonio/parola123</code> (header <code>Authorization: Basic ...</code>)</small>
+  </p>
+
+  <!-- Butoane overview -->
+  <div class="buttons">
+    <button onclick="checkBackend()">
+      <span class="badge-get">GET</span> Check People & Device Services
+    </button>
+    <button onclick="getAllPersons()">
+      <span class="badge-get">GET</span> Get All Persons
+    </button>
+    <button onclick="getAllDevices()">
+      <span class="badge-get">GET</span> Get All Devices
+    </button>
+  </div>
+
+  <!-- Formular pentru creare person -->
+  <fieldset>
+    <legend>Insert Person (people-service)</legend>
+
+    <div class="form-row">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="jdoe" value="demo_user">
+    </div>
+    <div class="form-row">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="parola_userului" value="parola123">
+    </div>
+    <div class="form-row">
+      <label for="name">Name</label>
+      <input id="name" type="text" placeholder="John Doe" value="Demo User">
+    </div>
+    <div class="form-row">
+      <label for="role">Role</label>
+      <select id="role">
+        <option value="ADMIN">ADMIN</option>
+        <option value="CLIENT" selected>CLIENT</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="address">Address</label>
+      <input id="address" type="text" placeholder="Cluj-Napoca" value="Cluj-Napoca">
+    </div>
+    <div class="form-row">
+      <label for="age">Age</label>
+      <input id="age" type="number" min="0" value="25">
+    </div>
+
+    <button onclick="insertPersonFromForm()">
+      <span class="badge-post">POST</span> Insert Person
+    </button>
+  </fieldset>
+  <fieldset>
+  <legend>Manage Persons (update / delete)</legend>
+
+  <!-- Update Person -->
+  <div class="form-row">
+    <label for="upd-person-id">Person ID (UUID)</label>
+    <input id="upd-person-id" type="text" placeholder="UUID of Person to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-username">Username</label>
+    <input id="upd-username" type="text" placeholder="New username (required)">
+  </div>
+  <div class="form-row">
+    <label for="upd-password">Password</label>
+    <input id="upd-password" type="password" placeholder="New password (required)">
+  </div>
+
+  <div class="form-row">
+    <label for="upd-name">Name</label>
+    <input id="upd-name" type="text" placeholder="New name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-role">Role</label>
+    <select id="upd-role">
+      <option value="">(no change)</option>
+      <option value="ADMIN">ADMIN</option>
+      <option value="CLIENT">CLIENT</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="upd-address">Address</label>
+    <input id="upd-address" type="text" placeholder="New address (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-age">Age</label>
+    <input id="upd-age" type="number" min="0" placeholder="New age (optional)">
+  </div>
+
+  <button onclick="updatePerson()">
+    <span class="badge-post">PUT</span> Update Person
+  </button>
+
+  <hr>
+
+  <!-- Delete Person -->
+  <div class="form-row">
+    <label for="del-person-id">Person ID (UUID)</label>
+    <input id="del-person-id" type="text" placeholder="UUID of Person to delete">
+  </div>
+
+  <button onclick="deletePerson()" style="background:#e53935;">
+    DELETE Person
+  </button>
+</fieldset>
+
+
+  <!-- Formular pentru creare device -->
+  <fieldset>
+  <legend>Insert Device (device-service)</legend>
+
+  <div class="form-row">
+    <label for="dev-name">Name</label>
+    <input id="dev-name" type="text" placeholder="PC, Frigider, TV">
+  </div>
+  <div class="form-row">
+    <label for="dev-max-consumption">Max consumption</label>
+    <input id="dev-max-consumption" type="number" step="0.01" min="0" placeholder="6">
+  </div>
+  <div class="form-row">
+    <label for="dev-owner-id">Owner ID (UUID)</label>
+    <input id="dev-owner-id" type="text" placeholder="UUID of Person (ownerId)">
+  </div>
+
+  <button onclick="insertDeviceFromForm()">
+    <span class="badge-post">POST</span> Insert Device
+  </button>
+</fieldset>
+
+<fieldset>
+  <legend>Manage Devices (update / delete)</legend>
+
+  <!-- Update Device -->
+  <div class="form-row">
+    <label for="upd-device-id">Device ID (UUID)</label>
+    <input id="upd-device-id" type="text" placeholder="UUID of Device to update">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-name">Name</label>
+    <input id="upd-dev-name" type="text" placeholder="New device name (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-max-consumption">Max consumption</label>
+    <input id="upd-dev-max-consumption" type="number" step="0.01" min="0" placeholder="New max consumption (optional)">
+  </div>
+  <div class="form-row">
+    <label for="upd-dev-owner-id">Owner ID (UUID)</label>
+    <input id="upd-dev-owner-id" type="text" placeholder="New ownerId (optional)">
+  </div>
+
+  <button onclick="updateDevice()">
+    <span class="badge-post">PUT</span> Update Device
+  </button>
+
+  <hr>
+
+  <!-- Delete Device -->
+  <div class="form-row">
+    <label for="del-device-id">Device ID (UUID)</label>
+    <input id="del-device-id" type="text" placeholder="UUID of Device to delete">
+  </div>
+
+  <button onclick="deleteDevice()" style="background:#e53935;">
+    DELETE Device
+  </button>
+</fieldset>
+
+
+
+  <!-- Devices for person -->
+  <fieldset>
+    <legend>Devices for Person (device-service)</legend>
+    <div class="inline-group">
+      <label for="personId">Person ID (UUID)</label>
+      <input id="personId" type="text" placeholder="UUID from /people response">
+      <button onclick="getDevicesForPersonFromInput()">
+        <span class="badge-get">GET</span> Get Devices for Person
+      </button>
+    </div>
+    <small>Ia un ID din răspunsul de la <strong>Get All Persons</strong> și pune-l aici.</small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Backend response:</legend>
+    <pre id="result">Click a button or submit a form...</pre>
+  </fieldset>
+
+  <script src="auth.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register - Energy Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top-bar">
+  <div class="brand">Energy Management</div>
+  <nav class="top-nav">
+    <a href="/login.html">Login</a>
+    <a href="/register.html" class="active">Register</a>
+  </nav>
+</header>
+
+<main class="page-container">
+  <h1 class="page-title">Register</h1>
+
+  <fieldset style="max-width:520px;">
+    <legend>Create account</legend>
+
+    <div class="form-row">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="client@test" />
+    </div>
+
+    <div class="form-row">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="123456" />
+    </div>
+
+    <div class="form-row">
+      <label for="role">Role</label>
+      <select id="role">
+        <option value="CLIENT" selected>CLIENT</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+    </div>
+
+    <button id="registerBtn">Register</button>
+
+    <div id="status" class="status"></div>
+  </fieldset>
+</main>
+
+<script src="auth.js"></script>
+<script>
+  const statusEl = document.getElementById("status");
+  function setStatus(msg, type="info") {
+    statusEl.textContent = msg || "";
+    statusEl.className = "status";
+    if (type === "error") statusEl.classList.add("error");
+    if (type === "ok") statusEl.classList.add("ok");
+  }
+
+  document.getElementById("registerBtn").addEventListener("click", async () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+
+    if (!username || !password) {
+      setStatus("Completează username și password.", "error");
+      return;
+    }
+
+    try {
+      setStatus("Registering...");
+      await register(username, password, role);
+      setStatus("OK! Acum mergi la login.", "ok");
+      setTimeout(() => window.location.href = "/login.html", 600);
+    } catch (e) {
+      setStatus(e.message, "error");
+    }
+  });
+</script>
+</body>
+</html>

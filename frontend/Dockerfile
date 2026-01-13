@@ -9,5 +9,6 @@ COPY styles.css      /usr/share/nginx/html/styles.css
 # pagina nouă de monitoring
 COPY charts.html     /usr/share/nginx/html/charts.html
 COPY charts.js   /usr/share/nginx/html/charts.js
+COPY . /usr/share/nginx/html
 
 EXPOSE 80

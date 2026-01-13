@@ -68,7 +68,7 @@ public class DeviceService {
     }
 
     private boolean userExists(UUID personId) {
-        String url = peopleServiceUrl + "/" + personId;
+        String url = peopleServiceUrl + "/internal/exists/" + personId;
         System.out.println("Calling people-service: " + url);
 
         try {
@@ -107,7 +107,11 @@ public class DeviceService {
     public UUID insert(DeviceDetailsDTO deviceDTO) {
 
         if (deviceDTO.getOwnerId() == null) {
-            throw new ResourceNotFoundException("The user ID cannot be null.");
+            throw new ResourceNotFoundException("The user ID was not found.");
+        }
+
+        if (deviceDTO.getOwnerId() == null) {
+            throw new ResourceNotFoundException("!The user ID cannot be null.");
         }
 
         if (!userExists(deviceDTO.getOwnerId())) {

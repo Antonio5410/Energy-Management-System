@@ -1,28 +1,47 @@
 // Same-origin: index.html este servit prin Traefik de pe http://localhost
     const BASE_URL = ''; // requests merg la /people, /devices pe același host
 
-    // Basic Auth: antonio/parola123
-    const AUTH_HEADER = 'Basic ' + btoa('antonio:parola123');
+    if (!requireAuth()) {
+      // te duce la login
+    }
+
+    if (getRole() !== "ADMIN") {
+      window.location.href = "/client.html";
+    }
 
     function show(text) {
       document.getElementById('result').innerText = text;
     }
 
+    // script.js
+    if (!requireAuth()) {
+      // dacă nu ai token, te trimite la login
+    } else {
+      // opțional: doar ADMIN are voie pe admin page
+      if (getRole() !== "ADMIN") {
+        window.location.href = "/client.html";
+      }
+    }
+
+    function show(text) {
+      document.getElementById("result").innerText = text;
+    }
+
     async function callApi(path, options = {}) {
       try {
         const response = await fetch(BASE_URL + path, {
-          method: options.method || 'GET',
+          method: options.method || "GET",
           headers: {
-            'Authorization': AUTH_HEADER,
-            ...(options.headers || {})
+            ...(options.headers || {}),
+            ...authHeaders(), // <-- Bearer token
           },
-          body: options.body || null
+          body: options.body || null,
         });
 
-        const contentType = response.headers.get('Content-Type') || '';
+        const contentType = response.headers.get("Content-Type") || "";
         let bodyText;
 
-        if (contentType.includes('application/json')) {
+        if (contentType.includes("application/json")) {
           const json = await response.json();
           bodyText = JSON.stringify(json, null, 2);
         } else {
@@ -30,13 +49,29 @@
         }
 
         show(
-          'URL: ' + (BASE_URL + path) +
-          '\nMethod: ' + (options.method || 'GET') +
-          '\nStatus: ' + response.status +
-          '\n\n' + bodyText
+          "URL: " + (BASE_URL + path) +
+          "\nMethod: " + (options.method || "GET") +
+          "\nStatus: " + response.status +
+          "\n\n" + bodyText
         );
       } catch (err) {
-        show('Request failed:\n' + err);
+        show("Request failed:\n" + err);
+      }
+    }
+
+    async function checkBackend() {
+      show("Checking services...");
+      try {
+        const [peopleRes, deviceRes] = await Promise.all([
+          fetch(BASE_URL + "/people", { headers: authHeaders() }),
+          fetch(BASE_URL + "/devices", { headers: authHeaders() })
+        ]);
+        show(
+          "people-service: " + peopleRes.status + "\n" +
+          "device-service: " + deviceRes.status
+        );
+      } catch (err) {
+        show("Health check failed:\n" + err);
       }
     }
 

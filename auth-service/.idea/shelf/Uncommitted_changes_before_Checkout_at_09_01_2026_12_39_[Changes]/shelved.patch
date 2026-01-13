@@ -1,0 +1,16 @@
+Index: ../device-data-simulator/src/main/resources/application.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Conexiune la RabbitMQ (portul mapat de Docker pe host)\r\nspring.rabbitmq.host=localhost\r\nspring.rabbitmq.port=5672\r\nspring.rabbitmq.username=admin\r\nspring.rabbitmq.password=admin\r\n\r\n# Interval trimitere (ms)\r\nsimulator.interval-ms=5000\r\n\r\n# UUID-ul device-ului simulat (schimb? cu unul real din DB, dac? vrei)\r\nsimulator.device-id=4019ad8f-b900-487a-9978-11c32bd67187\r\n
+===================================================================
+diff --git a/../device-data-simulator/src/main/resources/application.properties b/../device-data-simulator/src/main/resources/application.properties
+--- a/../device-data-simulator/src/main/resources/application.properties	(revision 54cd0d8f9154b9a2cccffd2b6a829d4be65c036a)
++++ b/../device-data-simulator/src/main/resources/application.properties	(date 1765293344129)
+@@ -7,5 +7,5 @@
+ # Interval trimitere (ms)
+ simulator.interval-ms=5000
+ 
+-# UUID-ul device-ului simulat (schimb? cu unul real din DB, dac? vrei)
+-simulator.device-id=4019ad8f-b900-487a-9978-11c32bd67187
++# UUID-ul device-ului simulat
++simulator.device-id = e78f3023-debf-4d6a-b35f-07e727dd9a45

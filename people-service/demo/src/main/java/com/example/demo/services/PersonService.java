@@ -87,6 +87,10 @@ public class PersonService {
         return person.getId();
     }
 
+    public boolean existsById(UUID id) {
+        return personRepository.existsById(id);
+    }
+
     public UUID update(UUID id, PersonDetailsDTO personDTO) {
         Optional<Person> personOptional = personRepository.findById(id);
         if (personOptional.isEmpty()) {

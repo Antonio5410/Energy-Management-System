@@ -5,6 +5,7 @@ import com.example.demo.entities.Role;
 import com.example.demo.services.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -81,5 +82,16 @@ public class AuthController {
                     Map.of("message", "Invalid username or password")
             );
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        }
+        return ResponseEntity.ok(Map.of(
+                "username", authentication.getName(),
+                "authorities", authentication.getAuthorities()
+        ));
     }
 }

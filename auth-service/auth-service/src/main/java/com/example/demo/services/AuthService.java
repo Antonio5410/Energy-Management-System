@@ -47,6 +47,9 @@ public class AuthService {
         cred.setPassword(passwordEncoder.encode(password));
         cred.setRole(role != null ? role : Role.CLIENT);
         cred.setUserId(userId);
+        if (cred.getUserId() == null) {
+            cred.setUserId(cred.getId());
+        }
 
         Credentials saved = credentialsRepository.save(cred);
         return CredentialsBuilder.toCredentialsDTO(saved);
@@ -62,17 +65,21 @@ public class AuthService {
             Credentials cred = userDetails.getCredentialsEntity();
             Role role = cred.getRole();
 
+            String safeUserId = (cred.getUserId() != null)
+                    ? cred.getUserId().toString()
+                    : cred.getId().toString();
+
             String token = jwtService.generateToken(
                     cred.getUsername(),
                     role,
-                    cred.getUserId() != null ? cred.getUserId().toString() : ""
+                    safeUserId
             );
 
             return Map.of(
                     "token", token,
                     "username", cred.getUsername(),
                     "role", role.name(),
-                    "userId", cred.getUserId() != null ? cred.getUserId().toString() : null
+                    "userId", safeUserId
             );
 
         } catch (BadCredentialsException e) {

@@ -18,6 +18,13 @@ http:
       service: people-service
       priority: 20  # mai mare decât frontend
 
+    backend-auth:
+      rule: "Host(`localhost`) && PathPrefix(`/auth`)"
+      entryPoints:
+        - web
+      service: auth-service
+      priority: 20
+
     # Device service - API
     backend-device:
       rule: "Host(`localhost`) && PathPrefix(`/devices`)"
@@ -41,6 +48,12 @@ http:
       loadBalancer:
         servers:
           - url: "http://people-service:8080"
+
+    # Auth service backend
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth-service:8080"
 
     # Device service backend
     device-service:

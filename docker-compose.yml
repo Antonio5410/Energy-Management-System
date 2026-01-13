@@ -28,10 +28,23 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-people-db
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
     networks:
       - proxy-network
     volumes:
       - people-data:/var/lib/postgresql/data
+
+  energy-auth-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: energy-auth-db
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
+    networks:
+      - proxy-network
+    volumes:
+      - auth-data:/var/lib/postgresql/data
 
   energy-device-db:
     image: postgres:15
@@ -39,6 +52,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       POSTGRES_DB: energy-device-db
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
     networks:
       - proxy-network
     volumes:
@@ -51,6 +65,7 @@ services:
       POSTGRES_DB: energy-monitoring-db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
     ports:
       - "5435:5432" # alt port host ca să nu se bată cu celelalte DB-uri
     networks:
@@ -70,6 +85,7 @@ services:
       DB_IP: energy-people-db
       DB_PORT: 5432
       PORT: 8080
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
       
       SPRING_RABBITMQ_HOST: rabbitmq-broker    
       SPRING_RABBITMQ_PORT: 5672
@@ -85,9 +101,33 @@ services:
       - traefik.http.routers.people.rule=PathPrefix(`/people`)
       - traefik.http.routers.people.entrypoints=web
       - traefik.http.services.people.loadbalancer.server.port=8080
-      - traefik.http.routers.people.middlewares=auth-basic@file
     deploy:
       replicas: 2
+
+  auth-service:
+    image: energy-management-auth-service:latest
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: root
+      DB_DBNAME: energy-auth-db
+      DB_IP: energy-auth-db
+      DB_PORT: 5432
+      PORT: 8080
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
+    depends_on:
+      - energy-auth-db
+    networks:
+      - proxy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.auth.rule=PathPrefix(`/auth`)
+      - traefik.http.routers.auth.entrypoints=web
+      - traefik.http.services.auth.loadbalancer.server.port=8080
+      # IMPORTANT: la /auth NU pune basic-auth middleware,
+      # altfel nu mai poți face login/register fără credențiale
 
   device-service:
     image: energy-management-deploy-example-device-service:latest
@@ -101,6 +141,7 @@ services:
       DB_IP: energy-device-db
       DB_PORT: 5432
       PORT: 8080
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
       
 
       SPRING_RABBITMQ_HOST: rabbitmq-broker
@@ -120,7 +161,6 @@ services:
       - traefik.http.routers.devices.rule=PathPrefix(`/devices`)
       - traefik.http.routers.devices.entrypoints=web
       - traefik.http.services.devices.loadbalancer.server.port=8080
-      - traefik.http.routers.devices.middlewares=auth-basic@file
     deploy:
       replicas: 1
 
@@ -136,6 +176,7 @@ services:
       DB_IP: energy-monitoring-db
       DB_PORT: 5432
       PORT: 8080
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
 
       SPRING_RABBITMQ_HOST: rabbitmq-broker
       SPRING_RABBITMQ_PORT: 5672
@@ -178,6 +219,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
+      APP_JWT_SECRET: "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_ME_1234567890"
     networks:
       - proxy-network
 
@@ -193,3 +235,4 @@ volumes:
   people-data:
   device-data:
   monitoring_db_data:
+  auth-data:

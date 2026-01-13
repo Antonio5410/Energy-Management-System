@@ -21,11 +21,18 @@ public class PersonBuilder {
 
     public static Person toEntity(PersonDetailsDTO personDetailsDTO) {
         //String name, String address, int age, String username, String password, Role role
-        return new Person(personDetailsDTO.getName(),
+        Person person = new Person(
+                personDetailsDTO.getName(),
                 personDetailsDTO.getAddress(),
                 personDetailsDTO.getAge(),
                 personDetailsDTO.getUsername(),
                 personDetailsDTO.getPassword(),
-                personDetailsDTO.getRole());
+                personDetailsDTO.getRole()
+        );
+        if (personDetailsDTO.getId() != null) {
+            person.setId(personDetailsDTO.getId());
+        }
+
+        return person;
     }
 }
