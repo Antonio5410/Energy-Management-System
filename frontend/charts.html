@@ -1,24 +1,24 @@
-<script src="auth.js"></script>
-<script>
-  if (!requireAuth()) {}
-</script>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Energy Monitoring Charts</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Energy Monitoring Charts</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="login.js"></script>
+  <script>
+    if (!requireAuth()) {}
+  </script>
 </head>
 <body>
 
 <header class="top-bar">
     <div class="brand">Energy Management</div>
     <nav class="top-nav">
-        <a href="/index.html">Admin</a>
+        <a href="/admin.html">Admin</a>
         <a href="/charts.html" class="active">Monitoring</a>
-        <a href="/login.html" onclick="logout()">Logout</a>
+        <a href="#" onclick="logout(); return false;">Logout</a>
     </nav>
 </header>
 
@@ -29,8 +29,8 @@
 </main>
 
 
-<script src="auth.js"></script>
 <script src="charts.js"></script>
+
 
 </body>
 </html>

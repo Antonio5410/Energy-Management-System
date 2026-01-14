@@ -1,20 +1,18 @@
-<script src="auth.js"></script>
-<script>
-  if (!requireAuth()) {}
-  if (getRole() !== "ADMIN") {
-    window.location.href = "/charts.html";
-  }
-</script>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Energy Management Dashboard</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- <link rel="stylesheet" href="charts.css"> -->
-  
+
+  <script src="login.js"></script>
+  <script>
+    if (!requireAuth()) {
+      // requireAuth deja face redirect, nu mai trebuie nimic
+    } else if (getRole() !== "ADMIN") {
+      window.location.href = "/charts.html";
+    }
+  </script>
 </head>
 <body>
 
@@ -22,9 +20,9 @@
   <header class="top-bar">
     <div class="brand">Energy Management</div>
     <nav class="top-nav">
-        <a href="/index.html" class="active">Admin</a>
+        <a href="/admin.html" class="active">Admin</a>
         <a href="/charts.html">Monitoring</a>
-        <a href="/login.html" onclick="logout()">Logout</a>
+        <a href="#" onclick="logout(); return false;">Logout</a>
     </nav>
   </header>
 
@@ -219,7 +217,6 @@
     <pre id="result">Click a button or submit a form...</pre>
   </fieldset>
 
-  <script src="auth.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

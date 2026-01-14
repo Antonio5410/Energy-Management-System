@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Devices</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="login.js"></script>
+    <script>
+        if (!requireAuth()) {}
+        if (getRole() !== "CLIENT") window.location.href = "/admin.html";
+    </script>
+</head>
+<body>
+
+<header class="top-bar">
+    <div class="brand">Energy Management</div>
+    <nav class="top-nav">
+        <a href="/client.html" class="active">Devices</a>
+        <a href="#" onclick="logout(); return false;">Logout</a>
+    </nav>
+</header>
+
+<main class="page-container">
+    <h1 class="page-title">My Devices</h1>
+
+    <fieldset>
+        <legend>Select device</legend>
+        <div class="form-row">
+        <label for="deviceSelect">Device</label>
+        <select id="deviceSelect"></select>
+        </div>
+        <button id="btnLoad" class="primary-btn">Load monitoring</button>
+        <div id="status" class="status"></div>
+    </fieldset>
+
+    <fieldset class="chart-container">
+        <legend>Monitoring</legend>
+        <canvas id="chart" width="900" height="400"></canvas>
+    </fieldset>
+</main>
+
+<!-- IMPORTANT: include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="client.js"></script>
+</body>
+</html>

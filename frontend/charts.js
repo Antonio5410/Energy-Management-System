@@ -7,14 +7,26 @@ if (!requireAuth()) {
 const ctx = document.getElementById("chart").getContext("2d");
 let chartInstance = null;
 
-async function fetchDevices() {
-  // ADMIN -> toate
-  // CLIENT -> doar ale lui (backend deja face asta)
-  return await fetchJson("/devices");
+function formatDate(d) {
+  // YYYY-MM-DD
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-async function fetchConsumption(deviceId) {
-  return await fetchJson(`/monitoring/device/${deviceId}/consumption`);
+async function fetchMonitoredDevices() {
+  // endpoint corect din MonitoringController
+  return await fetchJson("/monitoring/devices");
+}
+
+async function fetchConsumption(deviceId, fromDate, toDate) {
+  const from = formatDate(fromDate);
+  const to = formatDate(toDate);
+
+  // endpoint corect + query params obligatorii
+  const url = `/monitoring/devices/${deviceId}/consumption?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  return await fetchJson(url);
 }
 
 function renderChart(labels, values) {
@@ -24,30 +36,52 @@ function renderChart(labels, values) {
     type: "line",
     data: {
       labels,
-      datasets: [{
-        label: "Energy Consumption",
-        data: values,
-        borderColor: "rgb(75,192,192)",
-        tension: 0.2
-      }]
+      datasets: [
+        {
+          label: "Energy Consumption (kWh)",
+          data: values,
+          tension: 0.2
+        }
+      ]
     }
   });
 }
 
 async function loadChart() {
   try {
-    const devices = await fetchDevices();
-    if (!devices.length) {
-      alert("No devices available");
+    const devices = await fetchMonitoredDevices();
+
+    if (!Array.isArray(devices) || devices.length === 0) {
+      alert("No monitored devices available");
       return;
     }
 
-    const deviceId = devices[0].id;
-    const data = await fetchConsumption(deviceId);
+    const first = devices[0];
+    const deviceId = first.id || first.deviceId || first.idDevice;
 
+    if (!deviceId) {
+      console.error("MonitoredDevice object:", first);
+      alert("Device id field mismatch (id / deviceId / idDevice).");
+      return;
+    }
+
+    // ultimile 7 zile
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setDate(toDate.getDate() - 7);
+
+    const data = await fetchConsumption(deviceId, fromDate, toDate);
+
+    if (!Array.isArray(data)) {
+      console.error("Consumption response is not an array:", data);
+      alert("Monitoring returned non-array. Check console.");
+      return;
+    }
+
+    // DTO: HourlyConsumptionDTO(hourStart, energyKwh)
     renderChart(
-      data.map(d => d.timestamp),
-      data.map(d => d.energy)
+      data.map(d => d.hourStart),   // sau transformi în format mai frumos dacă vrei
+      data.map(d => d.energyKwh)
     );
   } catch (e) {
     console.error(e);

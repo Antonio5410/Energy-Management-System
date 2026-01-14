@@ -1,18 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="auth.js"></script>
-  <script>
-    // ROUTER FRONTEND
-    if (!getToken()) {
-      window.location.href = "/login.html";
-    } else if (getRole() === "ADMIN") {
-      window.location.href = "/admin.html";
-    } else {
-      window.location.href = "/charts.html";
-    }
-  </script>
-</head>
-<body>
-</body>
-</html>
+<script src="login.js"></script>
+<script>
+  const token = getToken();
+  const role = getRole();
+
+  if (!token) {
+    window.location.href = "/login.html";
+  } else if (role === "ADMIN") {
+    window.location.href = "/admin.html";
+  } else if (role === "CLIENT") {
+    window.location.href = "/client.html"; // sau charts.html dacă vrei la client tot charts
+  } else {
+    // role lipsă/invalid → curățăm și relog
+    logout();
+  }
+</script>

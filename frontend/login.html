@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -13,32 +13,35 @@
 <input id="password" type="password" placeholder="password">
 <button onclick="login()">Login</button>
 
-<script src="auth.js"></script>
+<script src="login.js"></script>
 <script>
 async function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-  try {
-    const res = await fetch("/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
+    try {
+        const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+        });
 
-    if (!res.ok) throw new Error("Login failed");
+        if (!res.ok) throw new Error("Login failed");
 
-    const data = await res.json();
-    saveAuth(data);
+        const data = await res.json();
+        console.log("LOGIN RESPONSE:", data);
+        saveAuth(data);
+        console.log("SAVED ROLE:", getRole(), "TOKEN:", !!getToken());
 
-    if (data.role === "ADMIN") {
-      window.location.href = "/admin.html";
-    } else {
-      window.location.href = "/charts.html";
+
+        if (data.role === "ADMIN") {
+        window.location.href = "/admin.html";
+        } else {
+        window.location.href = "/client.html";
+        }
+    } catch {
+        alert("Invalid credentials");
     }
-  } catch {
-    alert("Invalid credentials");
-  }
 }
 </script>
 
