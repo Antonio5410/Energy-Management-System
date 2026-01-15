@@ -118,11 +118,6 @@ public class PersonController {
         personService.delete(id);
         return ResponseEntity.noContent().build();
     }
-    public UUID findIdByUsername(String username) {
-        return personRepository.findByUsername(username)
-                .map(Person::getId)   // AICI poate trebuie schimbat (vezi mai jos)
-                .orElse(null);
-    }
 
     @GetMapping("/internal/id-by-username/{username}")
     public ResponseEntity<String> getIdByUsername(@PathVariable String username) {
