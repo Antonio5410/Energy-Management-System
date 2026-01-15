@@ -8,4 +8,7 @@ import java.util.UUID;
 
 public interface DeviceRepository extends JpaRepository<Device, UUID> {
     List<Device> findByOwnerId(UUID ownerId);
+    List<Device> findAllByOwnerId(UUID ownerId);
+
+    boolean existsByIdAndOwnerId(UUID id, UUID ownerId);
 }

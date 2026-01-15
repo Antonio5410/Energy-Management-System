@@ -2,6 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.dtos.PersonDTO;
 import com.example.demo.dtos.PersonDetailsDTO;
+import com.example.demo.entities.Person;
 import com.example.demo.security.JwtPrincipal;
 import com.example.demo.services.PersonService;
 import jakarta.validation.Valid;
@@ -98,8 +99,8 @@ public class PersonController {
     }
     @GetMapping("/internal/exists/{id}")
     public ResponseEntity<Void> exists(@PathVariable UUID id) {
-        boolean ok = personService.existsById(id);
-        return ok ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+                boolean personExists = personService.existsById(id);
+        return personExists ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     // ADMIN only
@@ -117,4 +118,19 @@ public class PersonController {
         personService.delete(id);
         return ResponseEntity.noContent().build();
     }
+    public UUID findIdByUsername(String username) {
+        return personRepository.findByUsername(username)
+                .map(Person::getId)   // AICI poate trebuie schimbat (vezi mai jos)
+                .orElse(null);
+    }
+
+    @GetMapping("/internal/id-by-username/{username}")
+    public ResponseEntity<String> getIdByUsername(@PathVariable String username) {
+        UUID id = personService.findIdByUsername(username);
+        if (id == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(id.toString());
+    }
+
 }

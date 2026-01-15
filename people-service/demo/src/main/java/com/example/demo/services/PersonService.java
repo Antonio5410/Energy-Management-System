@@ -39,7 +39,9 @@ public class PersonService {
     @Value("${sync.routing-key}")
     private String syncRoutingKey;
 
-
+    public PersonService(PersonRepository personRepository) {
+        this.personRepository = personRepository;
+    }
     @Autowired
     public PersonService(PersonRepository personRepository, RestTemplate restTemplate, RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;

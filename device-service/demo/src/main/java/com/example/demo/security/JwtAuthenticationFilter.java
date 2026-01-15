@@ -24,10 +24,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        System.out.println("FILTER CHECK PATH=" + request.getRequestURI());
-        return false;
+        String path = request.getRequestURI();
+        return path.startsWith("/auth/")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs");
     }
-
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -35,8 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        System.out.println("PATH=" + request.getRequestURI());
-        System.out.println("AUTH_HEADER=" + header);
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -46,24 +45,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
-            System.out.println("TOKEN_PREFIX=" + token.substring(0, Math.min(20, token.length())));
-
             boolean valid = jwtService.isTokenValid(token);
-            System.out.println("TOKEN_VALID=" + valid);
-
             if (!valid) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
             String username = jwtService.extractUsername(token);
-            String role = jwtService.extractRole(token);
-            String userId = jwtService.extractUserId(token);
+            String role = jwtService.extractRole(token); // "CLIENT" / "ADMIN"
+
+            // dacă n-ai userId în token, îl lăsăm null
+            String userId = null;
+            try {
+                userId = jwtService.extractUserId(token);
+            } catch (Exception ignored) {}
 
             System.out.println("JWT username=" + username + " role=" + role + " userId=" + userId);
 
-            if (username != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                var principal = new JwtPrincipal(username, userId, role);
+            if (username != null && role != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                JwtPrincipal principal = new JwtPrincipal(username, userId, role);
 
                 var auth = new UsernamePasswordAuthenticationToken(
                         principal,
@@ -81,5 +83,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-
 }

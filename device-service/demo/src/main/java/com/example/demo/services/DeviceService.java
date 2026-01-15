@@ -172,4 +172,30 @@ public class DeviceService {
         }
         deviceRepository.deleteById(id);
     }
+
+    public UUID resolveOwnerIdByUsername(String username) {
+        String url = peopleServiceUrl + "/internal/id-by-username/" + username;
+        System.out.println("Calling people-service: " + url);
+
+        try {
+            String idStr = restTemplate.getForObject(url, String.class);
+            if (idStr == null || idStr.isBlank()) {
+                throw new ResourceNotFoundException("OwnerId not found for username=" + username);
+            }
+            return UUID.fromString(idStr.trim());
+
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new ResourceNotFoundException("User not found for username=" + username);
+
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundException("Invalid UUID returned by people-service for username=" + username);
+
+        } catch (RestClientException e) {
+            throw new ResourceNotFoundException("People-service unavailable: " + e.getMessage());
+        }
+    }
+
+    public boolean isDeviceOwnedBy(UUID deviceId, UUID ownerId) {
+        return deviceRepository.existsByIdAndOwnerId(deviceId, ownerId);
+    }
 }

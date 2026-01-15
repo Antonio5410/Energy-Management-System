@@ -30,13 +30,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // CLIENT + ADMIN pot vedea devices
-//                        .requestMatchers(HttpMethod.GET, "/devices/**").hasAnyRole("CLIENT", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/devices/**").authenticated()
+                        .requestMatchers("/auth/**").permitAll()
 
-                        // doar ADMIN poate modifica
-                        .requestMatchers(HttpMethod.POST, "/devices/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE,"/devices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/devices/**").hasAnyRole("ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/devices/**").hasAnyRole("ADMIN", "CLIENT")
+
+                        .requestMatchers(HttpMethod.PUT, "/devices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/devices/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
