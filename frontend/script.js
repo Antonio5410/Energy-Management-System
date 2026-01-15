@@ -1,259 +1,182 @@
-// Same-origin: index.html este servit prin Traefik de pe http://localhost
-    const BASE_URL = ''; // requests merg la /people, /devices pe același host
+// script.js (ADMIN PAGE) - JWT ONLY
+const BASE_URL = ""; // same-origin prin Traefik
 
-    if (!requireAuth()) {
-      // te duce la login
-    }
+// guard
+if (!requireAuth()) {
+  // requireAuth face redirect
+}
+if (getRole() !== "ADMIN") {
+  window.location.href = "/client.html";
+}
 
-    if (getRole() !== "ADMIN") {
-      window.location.href = "/client.html";
-    }
+function show(text) {
+  document.getElementById("result").innerText = text;
+}
 
-    function show(text) {
-      document.getElementById('result').innerText = text;
-    }
+async function callApi(path, options = {}) {
+  const res = await fetch(BASE_URL + path, {
+    method: options.method || "GET",
+    headers: {
+      ...(options.headers || {}),
+      ...authHeaders(), // Bearer din login.js
+    },
+    body: options.body || null,
+  });
 
-    // script.js
-    if (!requireAuth()) {
-      // dacă nu ai token, te trimite la login
-    } else {
-      // opțional: doar ADMIN are voie pe admin page
-      if (getRole() !== "ADMIN") {
-        window.location.href = "/client.html";
-      }
-    }
+  const contentType = res.headers.get("Content-Type") || "";
+  let bodyText = "";
 
-    function show(text) {
-      document.getElementById("result").innerText = text;
-    }
+  if (contentType.includes("application/json")) {
+    const json = await res.json().catch(() => null);
+    bodyText = JSON.stringify(json, null, 2);
+  } else {
+    bodyText = await res.text().catch(() => "");
+  }
 
-    async function callApi(path, options = {}) {
-      try {
-        const response = await fetch(BASE_URL + path, {
-          method: options.method || "GET",
-          headers: {
-            ...(options.headers || {}),
-            ...authHeaders(), // <-- Bearer token
-          },
-          body: options.body || null,
-        });
+  show(
+    "URL: " + (BASE_URL + path) +
+    "\nMethod: " + (options.method || "GET") +
+    "\nStatus: " + res.status +
+    "\n\n" + bodyText
+  );
 
-        const contentType = response.headers.get("Content-Type") || "";
-        let bodyText;
+  return res;
+}
 
-        if (contentType.includes("application/json")) {
-          const json = await response.json();
-          bodyText = JSON.stringify(json, null, 2);
-        } else {
-          bodyText = await response.text();
-        }
+// ---- HEALTH / LISTĂRI ----
 
-        show(
-          "URL: " + (BASE_URL + path) +
-          "\nMethod: " + (options.method || "GET") +
-          "\nStatus: " + response.status +
-          "\n\n" + bodyText
-        );
-      } catch (err) {
-        show("Request failed:\n" + err);
-      }
-    }
+async function checkBackend() {
+  show("Checking people-service and device-service...");
+  const peopleRes = await fetch(BASE_URL + "/people", { headers: authHeaders() });
+  const deviceRes = await fetch(BASE_URL + "/devices", { headers: authHeaders() });
 
-    async function checkBackend() {
-      show("Checking services...");
-      try {
-        const [peopleRes, deviceRes] = await Promise.all([
-          fetch(BASE_URL + "/people", { headers: authHeaders() }),
-          fetch(BASE_URL + "/devices", { headers: authHeaders() })
-        ]);
-        show(
-          "people-service: " + peopleRes.status + "\n" +
-          "device-service: " + deviceRes.status
-        );
-      } catch (err) {
-        show("Health check failed:\n" + err);
-      }
-    }
+  show(
+    "Health check:\n" +
+    "people-service: " + peopleRes.status + "\n" +
+    "device-service: " + deviceRes.status
+  );
+}
 
-    // ---- HEALTH / LISTĂRI ----
+function getAllPersons() {
+  callApi("/people");
+}
 
-    async function checkBackend() {
-      show('Checking people-service and device-service...');
-      try {
-        const [peopleRes, deviceRes] = await Promise.all([
-          fetch(BASE_URL + '/people', { headers: { 'Authorization': AUTH_HEADER }}),
-          fetch(BASE_URL + '/devices', { headers: { 'Authorization': AUTH_HEADER }})
-        ]);
+function getAllDevices() {
+  callApi("/devices");
+}
 
-        const text =
-          'Health check:\n' +
-          'people-service: ' + peopleRes.status + '\n' +
-          'device-service: ' + deviceRes.status + '\n';
+// ---- INSERT PERSON ----
 
-        show(text);
-      } catch (err) {
-        show('Health check failed:\n' + err);
-      }
-    }
+async function insertPersonFromForm() {
+  const person = {
+    username: document.getElementById("username").value || null,
+    password: document.getElementById("password").value || null,
+    role: document.getElementById("role").value || null,
+    name: document.getElementById("name").value || null,
+    address: document.getElementById("address").value || null,
+    age: parseInt(document.getElementById("age").value, 10) || null,
+  };
 
-    function getAllPersons() {
-      callApi('/people');
-    }
+  await callApi("/people", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(person),
+  });
+}
 
-    function getAllDevices() {
-      callApi('/devices');
-    }
+// ---- UPDATE / DELETE PERSON ----
 
-    // ---- INSERT PERSON ----
+async function updatePerson() {
+  const id = document.getElementById("upd-person-id").value.trim();
+  if (!id) return alert("Te rog introdu Person ID (UUID) pentru update.");
 
-    async function insertPersonFromForm() {
-      const person = {
-        username: document.getElementById('username').value || null,
-        password: document.getElementById('password').value || null,
-        role: document.getElementById('role').value || null,
-        name: document.getElementById('name').value || null,
-        address: document.getElementById('address').value || null,
-        age: parseInt(document.getElementById('age').value, 10) || null
-      };
+  const username = document.getElementById("upd-username").value.trim();
+  const password = document.getElementById("upd-password").value.trim();
+  if (!username || !password) return alert("Username și password sunt obligatorii la update.");
 
-      await callApi('/people', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(person)
-      });
-    }
+  const name = document.getElementById("upd-name").value.trim();
+  const role = document.getElementById("upd-role").value;
+  const address = document.getElementById("upd-address").value.trim();
+  const ageStr = document.getElementById("upd-age").value;
 
-    // ---- UPDATE / DELETE PERSON ----
+  const body = {
+    username,
+    password,
+    name: name || null,
+    address: address || null,
+    role: role || null,
+    age: ageStr ? parseInt(ageStr, 10) : null,
+  };
 
-    async function updatePerson() {
-      const id = document.getElementById('upd-person-id').value.trim();
-      if (!id) {
-        alert('Te rog introdu Person ID (UUID) pentru update.');
-        return;
-      }
+  await callApi("/people/" + encodeURIComponent(id), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
 
-      const username = document.getElementById('upd-username').value.trim();
-      const password = document.getElementById('upd-password').value.trim();
+async function deletePerson() {
+  const id = document.getElementById("del-person-id").value.trim();
+  if (!id) return alert("Te rog introdu Person ID (UUID) pentru delete.");
 
-      if (!username || !password) {
-        alert('Username și password sunt obligatorii la update (backend validation).');
-        return;
-      }
+  await callApi("/people/" + encodeURIComponent(id), { method: "DELETE" });
+}
 
-      const name = document.getElementById('upd-name').value.trim();
-      const role = document.getElementById('upd-role').value;
-      const address = document.getElementById('upd-address').value.trim();
-      const ageStr = document.getElementById('upd-age').value;
+// ---- INSERT DEVICE ----
 
-      const body = {
-        username: username,
-        password: password,
-        name: name || null,
-        address: address || null,
-        role: role || null,
-        age: ageStr ? parseInt(ageStr, 10) : null
-      };
+async function insertDeviceFromForm() {
+  const name = document.getElementById("dev-name").value || null;
+  const maxConsStr = document.getElementById("dev-max-consumption").value;
+  const ownerId = document.getElementById("dev-owner-id").value.trim();
 
-      await callApi('/people/' + encodeURIComponent(id), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-    }
+  const device = {
+    name,
+    consumMaxim: maxConsStr ? parseFloat(maxConsStr) : null,
+    ownerId: ownerId || null,
+  };
 
+  await callApi("/devices", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(device),
+  });
+}
 
-    async function deletePerson() {
-      const id = document.getElementById('del-person-id').value.trim();
-      if (!id) {
-        alert('Te rog introdu Person ID (UUID) pentru delete.');
-        return;
-      }
+// ---- DEVICES BY PERSON ----
 
-      await callApi('/people/' + encodeURIComponent(id), {
-        method: 'DELETE'
-      });
-    }
+async function getDevicesForPersonFromInput() {
+  const personId = document.getElementById("personId").value.trim();
+  if (!personId) return alert("Te rog introdu un UUID pentru persoană.");
+  await callApi("/devices/owner/" + encodeURIComponent(personId));
+}
 
+// ---- UPDATE / DELETE DEVICE ----
 
-    // ---- INSERT DEVICE ----
+async function updateDevice() {
+  const id = document.getElementById("upd-device-id").value.trim();
+  if (!id) return alert("Te rog introdu Device ID (UUID) pentru update.");
 
-    async function insertDeviceFromForm() {
-      const name = document.getElementById('dev-name').value || null;
-      const maxConsStr = document.getElementById('dev-max-consumption').value;
-      const ownerId = document.getElementById('dev-owner-id').value.trim();
+  const name = document.getElementById("upd-dev-name").value.trim();
+  const maxStr = document.getElementById("upd-dev-max-consumption").value;
+  const ownerId = document.getElementById("upd-dev-owner-id").value.trim();
 
-      const device = {
-        name: name,
-        consumMaxim: maxConsStr ? parseFloat(maxConsStr) : null,
-        ownerId: ownerId || null
-      };
+  const body = {};
+  if (name) body.name = name;
+  if (maxStr) body.consumMaxim = parseFloat(maxStr);
+  if (ownerId) body.ownerId = ownerId;
 
-      await callApi('/devices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(device)
-      });
-    }
+  if (Object.keys(body).length === 0) return alert("Completează măcar un câmp de actualizat.");
 
+  await callApi("/devices/" + encodeURIComponent(id), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
 
-    // ---- DEVICES BY PERSON ----
+async function deleteDevice() {
+  const id = document.getElementById("del-device-id").value.trim();
+  if (!id) return alert("Te rog introdu Device ID (UUID) pentru delete.");
 
-    async function getDevicesForPersonFromInput() {
-      const personId = document.getElementById('personId').value.trim();
-      if (!personId) {
-        alert('Te rog introdu un UUID pentru persoană.');
-        return;
-      }
-      await callApi('/devices/owner/' + encodeURIComponent(personId));
-    }
-
-    // ---- UPDATE / DELETE DEVICE ----
-
-    async function updateDevice() {
-      const id = document.getElementById('upd-device-id').value.trim();
-      if (!id) {
-        alert('Te rog introdu Device ID (UUID) pentru update.');
-        return;
-      }
-
-      const name = document.getElementById('upd-dev-name').value.trim();
-      const maxStr = document.getElementById('upd-dev-max-consumption').value;
-      const ownerId = document.getElementById('upd-dev-owner-id').value.trim();
-
-      const body = {};
-
-      if (name) body.name = name;
-      if (maxStr) body.consumMaxim = parseFloat(maxStr);
-      if (ownerId) body.ownerId = ownerId;
-
-      if (Object.keys(body).length === 0) {
-        alert('Completează măcar un câmp de actualizat.');
-        return;
-      }
-
-      await callApi('/devices/' + encodeURIComponent(id), {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-    }
-
-    async function deleteDevice() {
-      const id = document.getElementById('del-device-id').value.trim();
-      if (!id) {
-        alert('Te rog introdu Device ID (UUID) pentru delete.');
-        return;
-      }
-
-      await callApi('/devices/' + encodeURIComponent(id), {
-        method: 'DELETE'
-      });
-    }
+  await callApi("/devices/" + encodeURIComponent(id), { method: "DELETE" });
+}
