@@ -1,49 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <title>Energy Management - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="auth-body">
+    <main class="auth-container">
+        <div class="auth-card">
+        <h1 class="auth-title">Energy Management</h1>
+        <p class="auth-subtitle">Log in to manage your devices & monitoring.</p>
 
-<h2>Login</h2>
+        <form id="loginForm" class="auth-form">
+            <div class="auth-field">
+            <label for="username">Username</label>
+            <input id="username" type="text" autocomplete="username" required />
+            </div>
 
-<input id="username" placeholder="username">
-<input id="password" type="password" placeholder="password">
-<button onclick="login()">Login</button>
+            <div class="auth-field">
+            <label for="password">Password</label>
+            <input id="password" type="password" autocomplete="current-password" required />
+            </div>
 
-<script src="login.js"></script>
-<script>
-async function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+            <button class="primary-btn full" type="submit">Login</button>
+        </form>
 
-    try {
-        const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-        });
+        <div id="loginStatus" class="status"></div>
 
-        if (!res.ok) throw new Error("Login failed");
+        <div class="auth-footer">
+            <span>No account?</span>
+            <a class="link-btn" href="/register.html">Create one</a>
+        </div>
+        </div>
+    </main>
 
-        const data = await res.json();
-        console.log("LOGIN RESPONSE:", data);
-        saveAuth(data);
-        console.log("SAVED ROLE:", getRole(), "TOKEN:", !!getToken());
-
-
-        if (data.role === "ADMIN") {
-        window.location.href = "/admin.html";
-        } else {
-        window.location.href = "/client.html";
-        }
-    } catch {
-        alert("Invalid credentials");
-    }
-}
-</script>
-
+    <script src="login.js"></script>
 </body>
 </html>

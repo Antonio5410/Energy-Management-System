@@ -37,6 +37,46 @@ function requireAuth() {
     return true;
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault(); // <--- SUPER IMPORTANT, oprește refresh-ul
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+        const res = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+        });
+
+        if (!res.ok) throw new Error("Login failed");
+
+        const data = await res.json();
+        console.log("LOGIN RESPONSE:", data);
+
+        saveAuth(data); // din login.js-ul tău
+        console.log("SAVED ROLE:", getRole(), "TOKEN:", !!getToken());
+
+        if (data.role === "ADMIN") {
+            window.location.href = "/admin.html";
+        } else {
+            window.location.href = "/client.html";
+        }
+        } catch (err) {
+        console.error(err);
+        const status = document.getElementById("loginStatus");
+        if (status) status.textContent = "Invalid credentials";
+        else alert("Invalid credentials");
+        }
+    });
+});
+
+
 function authHeaders(method = "GET") {
     const token = getToken();
     const headers = {};
