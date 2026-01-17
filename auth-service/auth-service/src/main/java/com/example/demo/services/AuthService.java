@@ -46,14 +46,14 @@ public class AuthService {
         cred.setUsername(username);
         cred.setPassword(passwordEncoder.encode(password));
         cred.setRole(role != null ? role : Role.CLIENT);
+
+        // IMPORTANT: userId vine de la people-service; dacă nu există încă, îl lași null.
         cred.setUserId(userId);
-        if (cred.getUserId() == null) {
-            cred.setUserId(cred.getId());
-        }
 
         Credentials saved = credentialsRepository.save(cred);
         return CredentialsBuilder.toCredentialsDTO(saved);
     }
+
 
     public Map<String, Object> login(String username, String password) {
         try {
@@ -86,4 +86,38 @@ public class AuthService {
             throw e;
         }
     }
+    public void syncUserUpdated(UUID userId, String newUsername, String roleStr) {
+        if (userId == null) return;
+
+        Credentials cred = credentialsRepository.findByUserId(userId)
+                .orElse(null);
+
+        // dacă userul nu există în auth, nu facem nimic (nu vrem cred fără parolă)
+        if (cred == null) return;
+
+        if (newUsername != null && !newUsername.isBlank()) {
+            // username e UNIQUE -> dacă există altul cu același username, decizi ce faci
+            // safe: dacă e luat de altcineva, ignor update-ul username
+            var conflict = credentialsRepository.findByUsername(newUsername);
+            if (conflict.isEmpty() || conflict.get().getId().equals(cred.getId())) {
+                cred.setUsername(newUsername);
+            }
+        }
+
+        if (roleStr != null && !roleStr.isBlank()) {
+            try {
+                cred.setRole(Role.valueOf(roleStr));
+            } catch (IllegalArgumentException ignored) {
+                // role invalid -> ignore
+            }
+        }
+
+        credentialsRepository.save(cred);
+    }
+
+    public void syncUserDeleted(UUID userId) {
+        if (userId == null) return;
+        credentialsRepository.deleteByUserId(userId);
+    }
+
 }

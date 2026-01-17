@@ -128,4 +128,13 @@ public class PersonController {
         return ResponseEntity.ok(id.toString());
     }
 
+    @PostMapping("/self-register")
+    public ResponseEntity<String> selfRegister(@Valid @RequestBody PersonDetailsDTO person) {
+        // forțezi rol CLIENT indiferent ce trimite userul
+        person.setRole(com.example.demo.entities.enums.Role.CLIENT);
+
+        UUID id = personService.insert(person);
+        return ResponseEntity.ok(id.toString());
+    }
+
 }

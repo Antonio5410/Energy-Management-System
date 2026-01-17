@@ -24,32 +24,54 @@ form.addEventListener("submit", async (e) => {
     }
 
     try {
-        setStatus("Registering...");
+        setStatus("Creating profile...");
 
-        // 1) creezi user in people-service (ADMIN-only in backend-ul tau)
-        // Daca tu vrei self-register, atunci people-service trebuie sa permita create fara ADMIN.
-        // Momentan probabil o faci in auth-service (register) cu userId=null si apoi sincronizare.
-        // Eu pornesc de la varianta ta: /auth/register exista.
-        const res = await fetch("/auth/register", {
+        // 1️⃣ CREATE PERSON in people-service
+        const personRes = await fetch("/people/self-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username,
+            password,
+            name,
+            address,
+            age,
+            role: "CLIENT"
+        }),
+        });
+
+        const userId = await personRes.text();
+
+        if (!personRes.ok) {
+        setStatus(`Failed to create profile (${personRes.status})`, "error");
+        return;
+        }
+
+        setStatus("Creating credentials...");
+
+        // 2️⃣ CREATE CREDENTIALS in auth-service
+        const authRes = await fetch("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             username,
             password,
             role: "CLIENT",
-            userId: null
+            userId
         }),
         });
 
-        const data = await res.json().catch(() => ({}));
+        const authData = await authRes.json().catch(() => ({}));
 
-        if (!res.ok) {
-            setStatus(data.message || `Register failed (${res.status})`, "error");
-            return;
+        if (!authRes.ok) {
+        setStatus(authData.message || "Auth register failed", "error");
+        return;
         }
 
-        setStatus("Account created. You can log in now.", "ok");
-        setTimeout(() => (window.location.href = "/login.html"), 700);
+        setStatus("Account created. Redirecting to login...", "ok");
+        setTimeout(() => {
+        window.location.href = "/login.html";
+        }, 800);
 
     } catch (err) {
         console.error(err);

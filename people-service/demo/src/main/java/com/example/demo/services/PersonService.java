@@ -120,8 +120,22 @@ public class PersonService {
         person.setAddress(personDTO.getAddress());
         person.setAge(personDTO.getAge());
 
-        personRepository.save(person);
+            personRepository.save(person);
         LOGGER.debug("Person with id {} was updated in db", id);
+
+        SyncEventDTO event = new SyncEventDTO();
+        event.setEventType("USER_UPDATED");
+        event.setUserId(person.getId());
+        event.setUsername(person.getUsername());
+        event.setRole(person.getRole().name());
+        event.setTimestamp(Instant.now());
+
+        try {
+            rabbitTemplate.convertAndSend(syncExchange, syncRoutingKey, event);
+            LOGGER.info("Sent USER_UPDATED event for user {}", person.getId());
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send USER_UPDATED event for user {}: {}", person.getId(), e.getMessage());
+        }
 
         return id;
     }
@@ -160,6 +174,19 @@ public class PersonService {
 
         personRepository.delete(person);
         LOGGER.debug("Person with id {} was deleted from db", id);
+
+        SyncEventDTO event = new SyncEventDTO();
+        event.setEventType("USER_DELETED");
+        event.setUserId(id);
+        event.setTimestamp(Instant.now());
+
+        try {
+            rabbitTemplate.convertAndSend(syncExchange, syncRoutingKey, event);
+            LOGGER.info("Sent USER_DELETED event for user {}", id);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send USER_DELETED event for user {}: {}", id, e.getMessage());
+        }
     }
+
 
 }
