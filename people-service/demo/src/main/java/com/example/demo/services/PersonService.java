@@ -39,6 +39,13 @@ public class PersonService {
     @Value("${sync.routing-key}")
     private String syncRoutingKey;
 
+    @Value("${auth.service.url}")
+    private String authServiceUrl;
+
+    @Value("${internal.secret}")
+    private String internalSecret;
+
+
     // ✅ UN SINGUR CONSTRUCTOR (și nu depinzi de bean RestTemplate)
     public PersonService(PersonRepository personRepository, RabbitTemplate rabbitTemplate) {
         this.personRepository = personRepository;
@@ -123,6 +130,8 @@ public class PersonService {
             personRepository.save(person);
         LOGGER.debug("Person with id {} was updated in db", id);
 
+        syncAuthUpdate(person.getId(), person.getUsername(), person.getRole().name());
+
         SyncEventDTO event = new SyncEventDTO();
         event.setEventType("USER_UPDATED");
         event.setUserId(person.getId());
@@ -172,6 +181,8 @@ public class PersonService {
 
         deleteDevicesForPerson(id);
 
+        syncAuthDelete(id);
+
         personRepository.delete(person);
         LOGGER.debug("Person with id {} was deleted from db", id);
 
@@ -187,6 +198,46 @@ public class PersonService {
             LOGGER.warn("Failed to send USER_DELETED event for user {}: {}", id, e.getMessage());
         }
     }
+
+    private void syncAuthUpdate(UUID userId, String username, String role) {
+        try {
+            String url = authServiceUrl + "/internal/credentials/" + userId;
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("username", username);
+            body.put("role", role);
+
+            var headers = new org.springframework.http.HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            headers.set("X-INTERNAL-SECRET", internalSecret);
+
+            var entity = new org.springframework.http.HttpEntity<>(body, headers);
+
+            restTemplate.exchange(url, org.springframework.http.HttpMethod.PUT, entity, String.class);
+            LOGGER.info("Synced auth UPDATE for userId={}", userId);
+
+        } catch (Exception e) {
+            LOGGER.warn("Auth sync UPDATE failed for userId={}: {}", userId, e.getMessage());
+        }
+    }
+
+    private void syncAuthDelete(UUID userId) {
+        try {
+            String url = authServiceUrl + "/internal/credentials/" + userId;
+
+            var headers = new org.springframework.http.HttpHeaders();
+            headers.set("X-INTERNAL-SECRET", internalSecret);
+
+            var entity = new org.springframework.http.HttpEntity<>(headers);
+
+            restTemplate.exchange(url, org.springframework.http.HttpMethod.DELETE, entity, String.class);
+            LOGGER.info("Synced auth DELETE for userId={}", userId);
+
+        } catch (Exception e) {
+            LOGGER.warn("Auth sync DELETE failed for userId={}: {}", userId, e.getMessage());
+        }
+    }
+
 
 
 }

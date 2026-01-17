@@ -120,4 +120,30 @@ public class AuthService {
         credentialsRepository.deleteByUserId(userId);
     }
 
+    public void syncUpdateCredentials(UUID userId, String newUsername, Role newRole) {
+        Credentials cred = credentialsRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No credentials for userId=" + userId));
+
+        // dacă se schimbă username-ul, verificăm coliziuni
+        if (newUsername != null && !newUsername.isBlank() && !newUsername.equals(cred.getUsername())) {
+            Optional<Credentials> existing = credentialsRepository.findByUsername(newUsername);
+            if (existing.isPresent() && !existing.get().getId().equals(cred.getId())) {
+                throw new IllegalArgumentException("Username already exists: " + newUsername);
+            }
+            cred.setUsername(newUsername);
+        }
+
+        if (newRole != null) {
+            cred.setRole(newRole);
+        }
+
+        credentialsRepository.save(cred);
+    }
+
+    public void syncDeleteCredentials(UUID userId) {
+        // dacă nu există -> ok, nu crăpăm
+        credentialsRepository.findByUserId(userId).ifPresent(c -> credentialsRepository.delete(c));
+    }
+
+
 }
