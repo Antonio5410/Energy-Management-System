@@ -88,32 +88,72 @@ async function insertPersonFromForm() {
 
 async function updatePerson() {
   const id = document.getElementById("upd-person-id").value.trim();
-  if (!id) return alert("Te rog introdu Person ID (UUID) pentru update.");
+  if (!id) {
+    alert("Te rog introdu Person ID (UUID) pentru update.");
+    return;
+  }
 
   const username = document.getElementById("upd-username").value.trim();
   const password = document.getElementById("upd-password").value.trim();
-  if (!username || !password) return alert("Username și password sunt obligatorii la update.");
-
   const name = document.getElementById("upd-name").value.trim();
-  const role = document.getElementById("upd-role").value;
+  const roleSelected = document.getElementById("upd-role").value; // "" dacă no change
   const address = document.getElementById("upd-address").value.trim();
   const ageStr = document.getElementById("upd-age").value;
 
-  const body = {
-    username,
-    password,
-    name: name || null,
-    address: address || null,
-    role: role || null,
-    age: ageStr ? parseInt(ageStr, 10) : null,
-  };
+  // Dacă backend-ul tău cere username + password obligatoriu la update, păstrează asta:
+  if (!username || !password) {
+    alert("Username și password sunt obligatorii la update (backend validation).");
+    return;
+  }
 
-  await callApi("/people/" + encodeURIComponent(id), {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  try {
+    // 1) Luăm persoana curentă ca să aflăm role-ul existent (și orice altceva vrei)
+    const currentRes = await fetch(BASE_URL + "/people/" + encodeURIComponent(id), {
+      method: "GET",
+      headers: {
+        ...authHeaders(), // Bearer token
+      },
+    });
+
+    if (!currentRes.ok) {
+      const t = await currentRes.text();
+      show(
+        "GET /people/" + id +
+          "\nStatus: " + currentRes.status +
+          "\n\n" + t
+      );
+      return;
+    }
+
+    const current = await currentRes.json();
+    const currentRole = current.role; // ex: "CLIENT" / "ADMIN"
+
+    // 2) Construim body pentru PUT
+    // IMPORTANT: dacă nu selectezi nimic, trimitem currentRole
+    const body = {
+      username: username,
+      password: password,
+      role: roleSelected && roleSelected.length > 0 ? roleSelected : currentRole,
+      name: name || current.name || null,
+      address: address || current.address || null,
+      age: ageStr ? parseInt(ageStr, 10) : (current.age ?? null),
+    };
+
+    // 3) Facem PUT
+    await callApi("/people/" + encodeURIComponent(id), {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+  } catch (err) {
+    console.error(err);
+    show("Update failed:\n" + err);
+  }
 }
+
 
 async function deletePerson() {
   const id = document.getElementById("del-person-id").value.trim();
