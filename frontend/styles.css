@@ -442,3 +442,17 @@ pre#result {
 .link-btn:hover {
   text-decoration: underline;
 }
+
+.chat-box {
+  margin-top: 30px;
+}
+
+.chat-log {
+  background: #111;
+  color: #0f0;
+  padding: 10px;
+  height: 200px;
+  overflow-y: auto;
+  font-size: 13px;
+  border-radius: 6px;
+}

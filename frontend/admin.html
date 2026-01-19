@@ -211,6 +211,31 @@
     <small>Ia un ID din răspunsul de la <strong>Get All Persons</strong> și pune-l aici.</small>
   </fieldset>
 
+  <!-- ===== REALTIME CHAT (ADMIN) ===== -->
+<fieldset class="chat-box">
+  <legend>Realtime Support – Admin</legend>
+
+  <div class="form-row">
+    <label>User ID</label>
+    <input id="admin-user-id" type="text" placeholder="ex: 1">
+  </div>
+
+  <div class="form-row">
+    <label>Message</label>
+    <input id="admin-message" type="text" placeholder="Type message...">
+  </div>
+
+  <button onclick="sendAdminMessage()">Send</button>
+
+  <pre id="admin-chat-log" class="chat-log"></pre>
+</fieldset>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script src="ws-admin.js"></script>
+<script src="ws-client.js"></script>
+
   <fieldset>
     <legend>Backend response:</legend>
     <pre id="result">Click a button or submit a form...</pre>

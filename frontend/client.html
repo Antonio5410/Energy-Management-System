@@ -37,6 +37,26 @@
         <legend>Monitoring</legend>
         <canvas id="chart" width="900" height="400"></canvas>
     </fieldset>
+
+    
+    <!-- ===== REALTIME CHAT (CLIENT) ===== -->
+    <fieldset class="chat-box">
+        <legend>Realtime Support</legend>
+
+        <div class="form-row">
+            <label>Message to Admin</label>
+            <input id="client-message" type="text" placeholder="Ask for help...">
+        </div>
+
+        <button onclick="sendClientMessage()">Send</button>
+
+        <pre id="client-chat-log" class="chat-log"></pre>
+    </fieldset>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script src="ws-client.js"></script>
 </main>
 
 <!-- IMPORTANT: include Chart.js -->

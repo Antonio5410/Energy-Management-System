@@ -1,11 +1,12 @@
 package com.example.demo.realtimesupportservice.listener;
 
+import com.example.demo.realtimesupportservice.config.RabbitConfig;
 import com.example.demo.realtimesupportservice.dto.ChatMessage;
 import com.example.demo.realtimesupportservice.dto.OverconsumptionAlert;
+import tools.jackson.databind.ObjectMapper;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class OverconsumptionListener {
@@ -18,7 +19,7 @@ public class OverconsumptionListener {
         this.objectMapper = objectMapper;
     }
 
-    @RabbitListener(queues = "overconsumption.alerts")
+    @RabbitListener(queues = RabbitConfig.OVERCONSUMPTION_ALERTS_QUEUE)
     public void handleAlert(String body) {
         try {
             OverconsumptionAlert alert = objectMapper.readValue(body, OverconsumptionAlert.class);
@@ -36,11 +37,11 @@ public class OverconsumptionListener {
                     "/topic/notify.user." + alert.getUserId(),
                     msg
             );
+
+            System.out.println("[Rabbit] Alert forwarded to WS for userId=" + alert.getUserId());
         } catch (Exception e) {
-            // ca să nu moară listener-ul și să vezi clar ce ai primit
-            System.err.println("Failed to parse alert JSON: " + body);
+            System.err.println("[Rabbit] Failed to parse alert JSON. Body was: " + body);
             e.printStackTrace();
         }
     }
-
 }
