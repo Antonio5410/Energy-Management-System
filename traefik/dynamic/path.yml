@@ -35,6 +35,13 @@ http:
       service: device-service
       priority: 20  # la fel, peste frontend
 
+    realtime-ws:
+      rule: "Host(`localhost`) && (Path(`/ws`) || PathPrefix(`/ws/`))"
+      entryPoints:
+        - web
+      service: realtime-support
+      priority: 200
+
   services:
     # Nginx frontend – numele corect în rețeaua Docker
     nginx-frontend:
@@ -60,6 +67,12 @@ http:
       loadBalancer:
         servers:
           - url: "http://device-service:8080"
+          
+
+    realtime-support:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8085"
 
   middlewares:
     # Basic auth pt. /people și /devices

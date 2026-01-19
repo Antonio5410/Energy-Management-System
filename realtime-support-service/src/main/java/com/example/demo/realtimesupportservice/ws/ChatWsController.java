@@ -18,27 +18,33 @@ public class ChatWsController {
     }
 
     @MessageMapping("/chat.send")
-    public void send(ChatMessage msg) {
-        if (msg == null || msg.getFromUserId() == null || msg.getFromUserId().isBlank()) return;
-        if (msg.getTo() == null || msg.getTo().isBlank()) return;
+    public void handleChat(ChatMessage msg) {
 
-        // dacă user trimite către ADMIN => încercăm chatbot
+        // 1) trimitem mereu către admin dacă destinația e ADMIN
         if ("ADMIN".equalsIgnoreCase(msg.getTo())) {
-            String autoReply = chatbotService.tryReply(msg.getContent());
-
-            if (autoReply != null) {
-                // răspuns automat către user
-                ChatMessage reply = new ChatMessage("ADMIN-BOT", msg.getFromUserId(), autoReply);
-                messagingTemplate.convertAndSend("/topic/chat.user." + msg.getFromUserId(), reply);
-                return;
-            }
-
-            // dacă nu avem regulă => forward la admin (uman)
             messagingTemplate.convertAndSend("/topic/chat.admin", msg);
+
+            // 2) auto-reply către client (min. 10 reguli)
+            String botReply = chatbotService.reply(msg.getContent());
+            if (botReply != null) {
+                ChatMessage botMsg = new ChatMessage(
+                        "BOT",
+                        msg.getFromUserId(),
+                        botReply
+                );
+
+                messagingTemplate.convertAndSend(
+                        "/topic/chat.user." + msg.getFromUserId(),
+                        botMsg
+                );
+            }
             return;
         }
 
-        // dacă e mesaj admin -> user sau user -> user
-        messagingTemplate.convertAndSend("/topic/chat.user." + msg.getTo(), msg);
+        // 3) altfel: admin trimite către user
+        messagingTemplate.convertAndSend(
+                "/topic/chat.user." + msg.getTo(),
+                msg
+        );
     }
 }
