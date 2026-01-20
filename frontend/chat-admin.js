@@ -36,3 +36,37 @@ function sendAdminMessage() {
 }
 
 connectAdminWS();
+
+async function aiSuggestForAdmin() {
+    const input = document.getElementById("admin-message");
+    const content = (input?.value || "").trim();
+    if (!content) return logAdmin("ℹ️ Scrie întâi mesajul clientului (sau copiază-l aici) pentru sugestie.");
+
+    try {
+        const res = await fetch("http://localhost:8085/realtime/ai/suggest", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders()
+        },
+        body: JSON.stringify({ message: content })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+        logAdmin("❌ AI suggest failed: " + res.status + " " + JSON.stringify(data));
+        return;
+        }
+
+        logAdmin("🤖 AI Suggestion: " + data.suggestion);
+        // opțional: îți pune sugestia direct în input ca să dai Send imediat
+        // input.value = data.suggestion;
+
+    } catch (e) {
+        logAdmin("❌ AI exception: " + e);
+    }
+}
+
+window.aiSuggestForAdmin = aiSuggestForAdmin;
+

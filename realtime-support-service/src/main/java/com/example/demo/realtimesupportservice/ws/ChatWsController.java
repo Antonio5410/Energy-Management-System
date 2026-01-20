@@ -20,31 +20,25 @@ public class ChatWsController {
     @MessageMapping("/chat.send")
     public void handleChat(ChatMessage msg) {
 
-        // 1) trimitem mereu către admin dacă destinația e ADMIN
+        // 1) client -> admin
         if ("ADMIN".equalsIgnoreCase(msg.getTo())) {
             messagingTemplate.convertAndSend("/topic/chat.admin", msg);
 
-            // 2) auto-reply către client (min. 10 reguli)
+            // 2) chatbot: răspunde doar dacă are regulă clară
             String botReply = chatbotService.reply(msg.getContent());
-            if (botReply != null) {
-                ChatMessage botMsg = new ChatMessage(
-                        "BOT",
-                        msg.getFromUserId(),
-                        botReply
-                );
+            if (botReply != null && !botReply.isBlank()) {
+                ChatMessage botMsg = new ChatMessage("BOT", msg.getFromUserId(), botReply);
 
                 messagingTemplate.convertAndSend(
                         "/topic/chat.user." + msg.getFromUserId(),
                         botMsg
                 );
             }
+
             return;
         }
 
-        // 3) altfel: admin trimite către user
-        messagingTemplate.convertAndSend(
-                "/topic/chat.user." + msg.getTo(),
-                msg
-        );
+        // 3) admin -> client (to = userId)
+        messagingTemplate.convertAndSend("/topic/chat.user." + msg.getTo(), msg);
     }
 }

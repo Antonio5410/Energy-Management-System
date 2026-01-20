@@ -6,9 +6,13 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+
 
 
 @Configuration
@@ -17,6 +21,7 @@ public class RabbitConfig {
     public static final String DEVICE_DATA_EXCHANGE = "device-data-exchange";
     public static final String DEVICE_DATA_QUEUE = "device-data-queue";
     public static final String DEVICE_DATA_ROUTING_KEY = "device.data";
+    public static final String OVERCONSUMPTION_QUEUE = "overconsumption.alerts";
 
     @Bean
     public DirectExchange deviceDataExchange() {
@@ -38,6 +43,18 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Queue overconsumptionQueue() {
+        return new Queue(OVERCONSUMPTION_QUEUE, true);
+    }
+
+    @Bean
+    public MessageConverter jsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
+    }
+
+
+
+    @Bean
     public SimpleRabbitListenerContainerFactory myRabbitListenerContainerFactory(
             ConnectionFactory connectionFactory
     ) {
@@ -47,6 +64,13 @@ public class RabbitConfig {
         factory.setMessageConverter(new RawJsonMessageConverter());
 
         return factory;
+    }
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
+                                         MessageConverter jsonMessageConverter) {
+        RabbitTemplate template = new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConverter);
+        return template;
     }
 
     /// pentru device sync cu device service

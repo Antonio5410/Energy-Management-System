@@ -11,23 +11,20 @@ import java.util.UUID;
 public class MonitoredDevice {
 
     @Id
-    private UUID id;
+    private UUID id; // deviceId
+
+    private UUID userId;
 
     private Double maxHourlyConsumption;
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public UUID getUserId() { return userId; }
+    public Double getMaxHourlyConsumption() { return maxHourlyConsumption; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public Double getMaxHourlyConsumption() {
-        return maxHourlyConsumption;
-    }
-
+    public void setId(UUID id) { this.id = id; }
+    public void setUserId(UUID userId) { this.userId = userId; }
     public void setMaxHourlyConsumption(Double maxHourlyConsumption) {
         this.maxHourlyConsumption = maxHourlyConsumption;
     }
 }
+
