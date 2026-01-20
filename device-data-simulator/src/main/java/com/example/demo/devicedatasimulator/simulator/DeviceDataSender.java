@@ -48,6 +48,7 @@ public class DeviceDataSender {
         double min = 0.05;
         double max = 0.40;
         double value = min + (max - min) * random.nextDouble();
+        value *=3;
 
         BigDecimal bd = BigDecimal.valueOf(value).setScale(4, RoundingMode.HALF_UP);
         String numericValue = bd.toPlainString(); // ex: "0.2345"

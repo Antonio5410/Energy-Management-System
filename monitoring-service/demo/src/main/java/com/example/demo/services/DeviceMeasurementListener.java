@@ -78,9 +78,21 @@ public class DeviceMeasurementListener {
             // 1) upsert HourlyConsumption
             HourlyConsumption saved = upsertHourlyConsumption(deviceId, hourStart, value);
 
+            logger.error("DEBUG: after upsert. deviceId={}, hourStart={}, total={}",
+                    deviceId, hourStart, saved.getEnergyKwh());
+
+
             // 2) detect + send alert (automat!)
             double totalKwhThisHour = saved.getEnergyKwh();
+
+            logger.error("DEBUG: comparing total={} with threshold={}",
+                    saved.getEnergyKwh(), MAX_ALLOWED_KWH_PER_HOUR);
+
             if (totalKwhThisHour > MAX_ALLOWED_KWH_PER_HOUR) {
+
+                logger.error("DEBUG: ENTERED ALERT IF !!!");
+
+
                 MonitoredDevice device = monitoredDeviceRepository
                         .findById(deviceId)
                         .orElseThrow(() -> new RuntimeException("Device not found"));
