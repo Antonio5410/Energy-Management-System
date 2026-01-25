@@ -2,104 +2,110 @@ Energy Management System – README
 
 1. Overview
 
-    The Energy Management System is a distributed application composed of multiple microservices that manage users, devices and energy consumption data. The system communicates through REST APIs and RabbitMQ message brokers. Each microservice is deployed in Docker and routed through Traefik as a reverse proxy.
+    The Energy Management System is a distributed application composed of multiple microservices that manage users, devices, energy consumption data, and real-time user support. The system communicates through REST APIs, RabbitMQ message brokers, and WebSocket connections. Each microservice is deployed in Docker containers and routed through Traefik as a reverse proxy.
 
-    The project contains the following major components:
+    The project follows the architecture and requirements defined in Assignment 1, Assignment 2, and is extended in Assignment 3 with real-time communication and AI-assisted support.
+
+    The system contains the following major components:
         1. User Service – handles CRUD operations on users and publishes synchronization events.
-        2. Device Service – manages devices, including their maximum hourly consumption, and processes synchronization messages from User Service.
-        3. Monitoring Service – consumes measurement data from smart meter simulators, aggregates it into hourly consumption totals, and stores the results.
-        4. Device Data Simulator – standalone application that generates synthetic smart meter readings and sends them through RabbitMQ.
-        5. RabbitMQ Brokers – one for synchronization (user/device events) and one for measurement data.
-        6. Traefik Reverse Proxy – exposes the services and handles routing inside Docker.
-
-    The system follows the architecture and requirements from Assignment 1 and Assignment 2 of the Distributed Systems laboratory.
-
-
+        2. Device Service – manages devices, including their maximum hourly consumption, and processes synchronization messages.
+        3. Monitoring Service – processes energy measurements, aggregates hourly consumption, and detects abnormal situations.
+        4. Realtime Support Service – provides real-time chat, notifications, rule-based support, and AI-assisted suggestions.
+        5. Device Data Simulator – standalone application that generates synthetic smart meter readings.
+        6. RabbitMQ Brokers – used for synchronization events, measurement data, and alert notifications.
+        7. Traefik Reverse Proxy – exposes the services and handles routing inside Docker.
 
 2. Architecture Description
 
     2.1 Microservices
+
         User Service
             Exposes REST endpoints for creating, retrieving, updating and deleting users.
-            Publishes a message to the Synchronization Queue whenever a new user is created.
+            Publishes a message to the synchronization queue whenever a new user is created.
             Stores user information in its own PostgreSQL database.
 
         Device Service
             Exposes REST endpoints for device management.
-            Stores devices together with their maximum hourly consumption.
+            Stores devices together with their maximum allowed hourly consumption.
             Consumes user synchronization events and inserts user IDs in its local database.
             Publishes device synchronization events when a new device is created.
             Stores device data in a separate PostgreSQL database.
 
         Monitoring Service
-            Subscribes to the Measurement Queue and processes incoming device readings.
-            Aggregates 10-minute measurement values into hourly totals.
+            Subscribes to the measurement queue and processes incoming device readings.
+            Aggregates 10-minute measurement values into hourly consumption totals.
             Stores hourly consumption in a dedicated PostgreSQL database.
-            Consumes device synchronization events to maintain an updated list of known device IDs.
-            Exposes endpoints for retrieving historical consumption for chart visualization.
+            Consumes device synchronization events to maintain an updated list of devices.
+            Detects overconsumption situations based on device thresholds.
+            Publishes overconsumption alerts to a dedicated RabbitMQ queue.
+
+        Realtime Support Service
+            Provides real-time communication between administrators and clients.
+            Uses WebSocket (STOMP) for bidirectional communication.
+            Consumes overconsumption alert events from RabbitMQ.
+            Sends real-time notifications to connected users.
+            Implements rule-based support suggestions using predefined rules.
+            Integrates an external AI service for intelligent assistance.
 
     2.2 Communication Flow
-        There are two RabbitMQ-based communication paths:
-            1. Synchronization Flow
-                User Service → publishes user.created
-                Device Service → consumes user.created
-                Device Service → publishes device.created
-                User Service and Monitoring Service → consume device.created
 
-            2. Measurement Flow
-                Device Data Simulator → publishes measurement messages (every 10 minutes)
-                Monitoring Service → consumes messages and computes hourly totals
+        The system uses multiple communication paths:
+
+        1. Synchronization Flow
+            User Service publishes user.created events.
+            Device Service consumes user.created events.
+            Device Service publishes device.created events.
+            Monitoring Service consumes device.created events.
+
+        2. Measurement Flow
+            Device Data Simulator publishes measurement messages every 10 minutes.
+            Monitoring Service consumes messages and computes hourly totals.
+
+        3. Alert and Realtime Flow (Assignment 3)
+            Monitoring Service publishes overconsumption alerts.
+            Realtime Support Service consumes alert events.
+            Realtime Support Service forwards notifications to clients via WebSocket.
 
     2.3 Deployment Model
+
         All components are deployed using Docker Compose.
-        Traefik acts as reverse proxy and exposes the services under different routes.
-
-        Each service runs in its own container and connects to its own PostgreSQL instance.
-        RabbitMQ runs in a dedicated container and exposes management UI if needed.
-
-
+        Traefik acts as a reverse proxy and routes HTTP and WebSocket traffic.
+        Each microservice runs in its own container.
+        Each service connects to its own PostgreSQL database.
+        RabbitMQ runs in a dedicated container and exposes a management interface.
 
 3. How to Build and Run the Project
 
     3.1 Prerequisites
         Docker and Docker Compose
-        Java 17+
+        Java 17 or higher
         Maven
-        Node.js (if building frontend components)
-        RabbitMQ (handled automatically through Docker)
+        Node.js (for frontend components if applicable)
 
     3.2 Running the entire system
-        From the project root, run:
+        From the project root directory, run:
             docker compose up --build
-        This command will:
-            build the microservices,
-            start PostgreSQL databases,
-            start RabbitMQ,
-            start Traefik,
-            expose the services through configured HTTP routes.
+        This command builds and starts all microservices, databases, RabbitMQ, Traefik, and the frontend.
 
     3.3 Running a single microservice locally
-        Inside a microservice folder:
+        Inside the microservice directory:
             mvn clean install
             mvn spring-boot:run
-        Make sure to stop any conflicting Docker instance of the same service to avoid port collisions.
-
-
+        The corresponding Docker container must be stopped to avoid port conflicts.
 
 4. Device Data Simulator
 
     The simulator is a standalone Java application that:
-        Generates a random baseline load for each device.
+        Generates a baseline load for each device.
         Produces one measurement every 10 minutes.
-        Sends messages in JSON format to the Measurement Queue.
+        Sends JSON messages to the measurement queue.
 
     Each message contains:
         timestamp
         device ID
         measurement value
-    The device ID is configurable in the simulator configuration file.
 
-
+    The device ID and generation parameters are configurable.
 
 5. Databases
 
@@ -108,9 +114,7 @@ Energy Management System – README
         device-db for Device Service
         monitoring-db for Monitoring Service
 
-    The schema is automatically created on first run when spring.jpa.hibernate.ddl-auto is set to update or create.
-
-
+    Database schemas are generated automatically at startup when Hibernate DDL auto-update is enabled.
 
 6. REST Endpoints Overview
 
@@ -125,80 +129,55 @@ Energy Management System – README
         GET /devices/{id} – get device details
 
     Monitoring Service
-        GET /monitoring/consumption?deviceId=&date= – returns hourly totals for the selected date
+        GET /monitoring/consumption?deviceId=&date= – returns hourly consumption totals
 
+7. Realtime Support and WebSocket Communication
 
+    The Realtime Support Service exposes WebSocket endpoints using the STOMP protocol.
+    Clients establish a persistent WebSocket connection to receive:
+        chat messages between administrator and client
+        system notifications
+        overconsumption alerts
 
-7. Synchronization Events
+    Messages are routed using topic-based destinations, allowing user-specific notifications.
 
-    User and device synchronization ensures consistency between microservices.
+8. Rule-Based and AI-Assisted Support
 
-    Example user event:
-        {
-        "event": "user.created",
-        "id": "UUID",
-        "name": "...",
-        "age": ...
-        }
+    The Realtime Support Service includes a rule-based support system implemented using predefined rules.
+    These rules generate immediate suggestions without relying on external services.
 
-    Example device event:
-        {
-        "event": "device.created",
-        "deviceId": 7,
-        "maxHourlyConsumption": 2.5
-        }
+    In addition, the system integrates an external AI service using the OpenAI API.
+    AI requests are performed via HTTPS and isolated in a dedicated service layer.
+    The OpenAI API key is provided through environment variables.
+    If the AI service is unavailable, the system continues to function using rule-based logic.
 
-    Each microservice updates its internal tables accordingly.
+9. RabbitMQ Queues
 
+    The following queues are used:
+        synchronization queue for user and device events
+        measurement queue for device readings
+        overconsumption.alerts queue for alert notifications
 
+    RabbitMQ ensures asynchronous communication and loose coupling between microservices.
 
-8. Measurement Processing Logic
+10. Traefik Configuration
 
-    Monitoring Service receives measurement messages in the form:
-        {
-        "timestamp": "...",
-        "deviceId": ...,
-        "measurement": ...
-        }
+    Traefik routes external requests to microservices using label-based configuration.
+    Each service defines routing rules, internal ports, and optional middleware.
+    WebSocket connections are routed through Traefik using HTTP upgrade.
 
-    Processing steps:
-        1. Parse timestamp and determine hour of day.
-        2. Search for an existing hourly record for that device.
-        3. If found, increment the total.
-        4. Otherwise, create a new hourly record.
-        5. Save the updated total to the database.
+11. Limitations and Notes
 
-    Hourly consumption data is later used for rendering daily charts.
+    Authentication and authorization are not enforced.
+    The device simulator is not containerized by default.
+    Database migration tools are not included.
+    Alert thresholds are configured per device but can be extended.
 
-
-
-9. Traefik Configuration
-
-    Traefik routes external requests to each microservice using label-based routing.
-    Each service defines:
-        router rule
-        service name
-        internal port
-        optional middleware (path prefix stripping)
-
-    Example route rule:
-        traefik.http.routers.device.rule=PathPrefix(/devices)
-
-
-
-10. Limitations and Notes
-
-    The project does not implement alerting when hourly consumption exceeds the device’s maximum allowed hourly limit.
-    No authentication or authorization mechanism is enabled.
-    Device simulator must be started manually; it is not containerized unless added explicitly.
-    In case of schema changes, database migration tools (Flyway/Liquibase) are recommended but not included.
-
-
-11. Future Extensions
+12. Future Extensions
 
     Possible improvements include:
-        Real-time WebSocket notifications for consumption threshold violations.
-        JWT authentication and role-based access control.
-        Unified logging with ELK or Loki.
-        Horizontal scaling with multiple replicas.
-        Property-based simulator configuration for multiple concurrent devices.
+        authentication with JWT and role-based access control
+        persistent chat history storage
+        advanced AI prompt customization
+        horizontal scaling of realtime services
+        centralized logging and monitoring
