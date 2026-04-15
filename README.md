@@ -1,93 +1,193 @@
-# energy-management-deploy-example
+Energy Management System – README
 
+1. Overview
 
+    The Energy Management System is a distributed application composed of multiple microservices that manage users, devices, energy consumption data, and real-time user support. The system communicates through REST APIs, RabbitMQ message brokers, and WebSocket connections. Each microservice is deployed in Docker containers and routed through Traefik as a reverse proxy.
+   
+    The project follows the architecture and requirements defined in Assignment 1, Assignment 2, and is extended in Assignment 3 with real-time communication and AI-assisted support.
 
-## Getting started
+    The system contains the following major components:
+   
+        1. User Service – handles CRUD operations on users and publishes synchronization events.
+        2. Device Service – manages devices, including their maximum hourly consumption, and processes synchronization messages.
+        3. Monitoring Service – processes energy measurements, aggregates hourly consumption, and detects abnormal situations.
+        4. Realtime Support Service – provides real-time chat, notifications, rule-based support, and AI-assisted suggestions.
+        5. Device Data Simulator – standalone application that generates synthetic smart meter readings.
+        6. RabbitMQ Brokers – used for synchronization events, measurement data, and alert notifications.
+        7. Traefik Reverse Proxy – exposes the services and handles routing inside Docker.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+3. Architecture Description
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+    2.1 Microservices
+   
+        User Service
+            Exposes REST endpoints for creating, retrieving, updating and deleting users.
+            Publishes a message to the synchronization queue whenever a new user is created.
+            Stores user information in its own PostgreSQL database.
+   
+        Device Service
+            Exposes REST endpoints for device management.
+            Stores devices together with their maximum allowed hourly consumption.
+            Consumes user synchronization events and inserts user IDs in its local database.
+            Publishes device synchronization events when a new device is created.
+            Stores device data in a separate PostgreSQL database.
+   
+        Monitoring Service
+            Subscribes to the measurement queue and processes incoming device readings.
+            Aggregates 10-minute measurement values into hourly consumption totals.
+            Stores hourly consumption in a dedicated PostgreSQL database.
+            Consumes device synchronization events to maintain an updated list of devices.
+            Detects overconsumption situations based on device thresholds.
+            Publishes overconsumption alerts to a dedicated RabbitMQ queue.
+   
+        Realtime Support Service
+            Provides real-time communication between administrators and clients.
+            Uses WebSocket (STOMP) for bidirectional communication.
+            Consumes overconsumption alert events from RabbitMQ.
+            Sends real-time notifications to connected users.
+            Implements rule-based support suggestions using predefined rules.
+            Integrates an external AI service for intelligent assistance.
 
-## Add your files
+    2.2 Communication Flow
+   
+        The system uses multiple communication paths:
+        1. Synchronization Flow
+            User Service publishes user.created events.
+            Device Service consumes user.created events.
+            Device Service publishes device.created events.
+            Monitoring Service consumes device.created events.
+        2. Measurement Flow
+            Device Data Simulator publishes measurement messages every 10 minutes.
+            Monitoring Service consumes messages and computes hourly totals.
+        3. Alert and Realtime Flow (Assignment 3)
+            Monitoring Service publishes overconsumption alerts.
+            Realtime Support Service consumes alert events.
+            Realtime Support Service forwards notifications to clients via WebSocket.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+    2.3 Deployment Model
+   
+        All components are deployed using Docker Compose.
+        Traefik acts as a reverse proxy and routes HTTP and WebSocket traffic.
+        Each microservice runs in its own container.
+        Each service connects to its own PostgreSQL database.
+        RabbitMQ runs in a dedicated container and exposes a management interface.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/burlacumihnea/energy-management-deploy-example.git
-git branch -M main
-git push -uf origin main
-```
+5. How to Build and Run the Project
 
-## Integrate with your tools
+    3.1 Prerequisites
+   
+        Docker and Docker Compose
+        Java 17 or higher
+        Maven
+        Node.js (for frontend components if applicable)
 
-- [ ] [Set up project integrations](https://gitlab.com/burlacumihnea/energy-management-deploy-example/-/settings/integrations)
+    3.2 Running the entire system
+   
+        From the project root directory, run:
+            docker compose up --build
+        This command builds and starts all microservices, databases, RabbitMQ, Traefik, and the frontend.
 
-## Collaborate with your team
+    3.3 Running a single microservice locally
+   
+        Inside the microservice directory:
+            mvn clean install
+            mvn spring-boot:run
+        The corresponding Docker container must be stopped to avoid port conflicts.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+7. Device Data Simulator
 
-## Test and Deploy
+    The simulator is a standalone Java application that:
+   
+        Generates a baseline load for each device.
+        Produces one measurement every 10 minutes.
+        Sends JSON messages to the measurement queue.
 
-Use the built-in continuous integration in GitLab.
+    Each message contains:
+   
+        timestamp
+        device ID
+        measurement value
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+    The device ID and generation parameters are configurable.
 
-***
+9. Databases
 
-# Editing this README
+    Each microservice uses its own PostgreSQL database:
+   
+        people-db for User Service
+        device-db for Device Service
+        monitoring-db for Monitoring Service
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+    Database schemas are generated automatically at startup when Hibernate DDL auto-update is enabled.
 
-## Suggestions for a good README
+11. REST Endpoints Overview
+   
+    User Service
+    
+        POST /people – create user
+        GET /people – list users
+        GET /people/{id} – get user details
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+    Device Service
+    
+        POST /devices – create device
+        GET /devices – list devices
+        GET /devices/{id} – get device details
 
-## Name
-Choose a self-explaining name for your project.
+    Monitoring Service
+    
+        GET /monitoring/consumption?deviceId=&date= – returns hourly consumption totals
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+13. Realtime Support and WebSocket Communication
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+    The Realtime Support Service exposes WebSocket endpoints using the STOMP protocol.
+    Clients establish a persistent WebSocket connection to receive:
+    
+        chat messages between administrator and client
+        system notifications
+        overconsumption alerts
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+    Messages are routed using topic-based destinations, allowing user-specific notifications.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+15. Rule-Based and AI-Assisted Support
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+    The Realtime Support Service includes a rule-based support system implemented using predefined rules.
+    These rules generate immediate suggestions without relying on external services.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+    In addition, the system integrates an external AI service using the OpenAI API.
+    AI requests are performed via HTTPS and isolated in a dedicated service layer.
+    The OpenAI API key is provided through environment variables.
+    If the AI service is unavailable, the system continues to function using rule-based logic.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+16. RabbitMQ Queues
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+    The following queues are used:
+    
+        synchronization queue for user and device events
+        measurement queue for device readings
+        overconsumption.alerts queue for alert notifications
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+    RabbitMQ ensures asynchronous communication and loose coupling between microservices.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+18. Traefik Configuration
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+    Traefik routes external requests to microservices using label-based configuration.
+    Each service defines routing rules, internal ports, and optional middleware.
+    WebSocket connections are routed through Traefik using HTTP upgrade.
 
-## License
-For open source projects, say how it is licensed.
+19. Limitations and Notes
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+    Authentication and authorization are not enforced.
+    The device simulator is not containerized by default.
+    Database migration tools are not included.
+    Alert thresholds are configured per device but can be extended.
+
+20. Future Extensions
+
+    Possible improvements include:
+    
+        authentication with JWT and role-based access control
+        persistent chat history storage
+        advanced AI prompt customization
+        horizontal scaling of realtime services
+        centralized logging and monitoring
